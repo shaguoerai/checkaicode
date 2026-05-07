@@ -23,9 +23,15 @@ export async function POST(req: Request) {
   }
 
   const lines = code.split("\n").length
-  if (lines > 500) {
+  const MAX_LINES = 500
+  if (lines > MAX_LINES) {
     return NextResponse.json(
-      { error: "File too large. Max 500 lines for free plan." },
+      {
+        error: `This file is ${lines} lines. Please keep it under ${MAX_LINES} lines (remove ${lines - MAX_LINES} lines) to try the free scan. Upgrade to Pro for unlimited file size.`,
+        lines,
+        maxLines: MAX_LINES,
+        overBy: lines - MAX_LINES,
+      },
       { status: 400 }
     )
   }

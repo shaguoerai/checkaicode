@@ -146,6 +146,13 @@ export default function ReviewPage() {
         setIssues(data.issues);
         setSummary(data.summary || "");
         setScore(data.score ?? 100);
+      } else if (data.error && data.lines) {
+        // 行数超限，友好提示
+        setError(
+          lang === "zh"
+            ? `文件共 ${data.lines} 行，免费版仅支持 ${data.maxLines} 行以内的文件。去掉 ${data.overBy} 行即可免费体验。`
+            : data.error
+        );
       } else {
         setError(data.error || "No result");
       }
