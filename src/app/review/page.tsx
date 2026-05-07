@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import type { Issue } from "@/lib/analyzer";
 
 function LangToggle() {
   const { lang, setLang, t } = useI18n();
@@ -84,8 +85,11 @@ export default function ReviewPage() {
   const { t } = useI18n();
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("auto");
-  const [result, setResult] = useState<string | null>(null);
+  const [issues, setIssues] = useState<Issue[] | null>(null);
+  const [summary, setSummary] = useState("");
+  const [score, setScore] = useState(100);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
@@ -128,7 +132,9 @@ export default function ReviewPage() {
   const analyze = async () => {
     if (!code.trim()) return;
     setLoading(true);
-    setResult(null);
+    setIssues(null);
+    setSummary("");
+    setError("");
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -136,9 +142,15 @@ export default function ReviewPage() {
         body: JSON.stringify({ code, language }),
       });
       const data = await res.json();
-      setResult(data.result ?? data.error ?? "No result");
+      if (data.issues) {
+        setIssues(data.issues);
+        setSummary(data.summary || "");
+        setScore(data.score ?? 100);
+      } else {
+        setError(data.error || "No result");
+      }
     } catch {
-      setResult("Network error");
+      setError("Network error");
     } finally {
       setLoading(false);
     }
@@ -218,14 +230,84 @@ export default function ReviewPage() {
           </div>
 
           {/* Result */}
-          {result !== null && (
+          {issues !== null && (
             <div className="flex flex-1 flex-col rounded-xl border border-white/10 bg-white/5 p-4 lg:max-w-xl">
-              <h2 className="text-lg font-semibold text-white">
-                {t("resultTitle")}
-              </h2>
-              <pre className="mt-3 flex-1 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-900 p-4 font-mono text-sm text-slate-300">
-                {result}
-              </pre>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">
+                  {t("resultTitle")}
+                </h2>
+                {/* Score badge */}
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${
+                    score >= 80
+                      ? "bg-green-500/20 text-green-400"
+                      : score >= 50
+                        ? "bg-yellow-500/20 text-yellow-400"
+                        : "bg-red-500/20 text-red-400"
+                  }`}
+                >
+                  Score: {score}/100
+                </span>
+              </div>
+
+              {/* Summary */}
+              {summary && (
+                <p className="mb-3 text-sm text-slate-400">{summary}</p>
+              )}
+
+              {/* Issues list */}
+              <div className="flex-1 overflow-auto space-y-2">
+                {issues.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                    <CheckCircleIcon />
+                    <p className="mt-2 text-sm">No issues found</p>
+                  </div>
+                ) : (
+                  issues.map((issue, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-lg border border-white/5 bg-slate-900/50 p-3"
+                    >
+                      <div className="flex items-start gap-2">
+                        {/* Severity badge */}
+                        <span
+                          className={`mt-0.5 inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                            issue.severity === "critical"
+                              ? "bg-red-500/20 text-red-400"
+                              : issue.severity === "warning"
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-blue-500/20 text-blue-400"
+                          }`}
+                        >
+                          {issue.severity}
+                        </span>
+
+                        {/* Content */}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-slate-200">
+                            {issue.message}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            L{issue.line}
+                            {issue.endLine && issue.endLine !== issue.line
+                              ? `-${issue.endLine}`
+                              : ""}{" "}
+                            · {issue.ruleId}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="flex flex-1 flex-col rounded-xl border border-red-500/20 bg-red-500/5 p-4 lg:max-w-xl">
+              <h2 className="text-lg font-semibold text-red-400">Error</h2>
+              <p className="mt-2 text-sm text-red-300">{error}</p>
             </div>
           )}
         </div>
@@ -240,6 +322,15 @@ function UploadIcon() {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="17 8 12 3 7 8" />
       <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  );
+}
+
+function CheckCircleIcon() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
     </svg>
   );
 }

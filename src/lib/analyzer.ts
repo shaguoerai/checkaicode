@@ -1,16 +1,28 @@
-import { execSync } from "child_process";
-import * as fs from "fs";
-import * as path from "path";
+/**
+ * checkaicode 代码分析器
+ * 通过 Modal 远程扫描服务执行 SAST + 密钥检测
+ * Modal URL 从环境变量 MODAL_URL 读取（Vercel 配置）
+ */
 
-interface Issue {
+const MODAL_URL: string =
+  process.env.MODAL_URL ||
+  "https://shaguoer--code-scanner-fastapi-app.modal.run";
+
+interface ModalFinding {
+  rule_id: string;
+  severity: "ERROR" | "WARNING" | "INFO";
+  message: string;
+  line_start: number;
+  line_end: number;
+  owasp?: string[];
+}
+
+export interface Issue {
   type: "security" | "quality" | "dependency";
   severity: "critical" | "warning" | "info";
   file: string;
   line: number;
-  column?: number;
   message: string;
-  fix?: string;
-  docsUrl?: string;
   ruleId: string;
   endLine?: number;
 }
@@ -25,129 +37,108 @@ const LANGUAGE_MAP: Record<string, string> = {
   java: "java",
 };
 
-const EXTENSION_MAP: Record<string, string> = {
-  python: ".py",
-  javascript: ".js",
-  typescript: ".ts",
-  go: ".go",
-  java: ".java",
-};
+/**
+ * 通过 Modal 远程扫描代码
+ */
+export async function analyzeCode(
+  code: string,
+  language: string
+): Promise<{
+  summary: string;
+  score: number;
+  issues: Issue[];
+}> {
+  const mappedLang = LANGUAGE_MAP[language.toLowerCase()] || "python";
 
-function getExtension(language: string): string {
-  const mapped = LANGUAGE_MAP[language.toLowerCase()] || language;
-  return EXTENSION_MAP[mapped] || ".txt";
+  // 调用 Modal Scanner API
+  const res = await fetch(`${MODAL_URL}/scan`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, language: mappedLang }),
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Scanner API ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data: {
+    findings: ModalFinding[];
+    total: number;
+    scan_time_ms: number;
+    error?: string;
+  } = await res.json();
+
+  const issues: Issue[] = data.findings.map((f) => ({
+    type: mapType(f.rule_id, f.owasp),
+    severity: mapSeverity(f.severity),
+    file: "input",
+    line: f.line_start,
+    message: f.message,
+    ruleId: f.rule_id,
+    endLine: f.line_end,
+  }));
+
+  // 计算评分
+  let score = 100;
+  for (const issue of issues) {
+    if (issue.severity === "critical") score -= 15;
+    else if (issue.severity === "warning") score -= 5;
+    else score -= 2;
+  }
+  score = Math.max(0, Math.min(100, score));
+
+  // 摘要
+  const critCount = issues.filter((i) => i.severity === "critical").length;
+  const warnCount = issues.filter((i) => i.severity === "warning").length;
+  const infoCount = issues.filter((i) => i.severity === "info").length;
+
+  const summary =
+    issues.length === 0
+      ? "No issues found."
+      : `Found ${issues.length} issue${issues.length > 1 ? "s" : ""} (${critCount} critical, ${warnCount} warning${critCount + warnCount > 0 ? ", " + infoCount + " info" : ""}). Scan time: ${data.scan_time_ms}ms.` +
+        (data.error ? ` Note: ${data.error}` : "");
+
+  return { summary, score, issues };
 }
 
-function mapSeverity(semgrepSeverity: string): "critical" | "warning" | "info" {
-  switch (semgrepSeverity.toLowerCase()) {
-    case "error":
+function mapSeverity(s: string): "critical" | "warning" | "info" {
+  switch (s.toUpperCase()) {
+    case "ERROR":
       return "critical";
-    case "warning":
+    case "WARNING":
       return "warning";
     default:
       return "info";
   }
 }
 
-function mapType(checkId: string, metadata: any): "security" | "quality" | "dependency" {
-  const cwe = metadata?.cwe || [];
-  const owasp = metadata?.owasp || [];
+function mapType(
+  ruleId: string,
+  owasp?: string[]
+): "security" | "quality" | "dependency" {
+  const idLower = ruleId.toLowerCase();
   const securityKeywords = [
-    "inject", "sql", "xss", "csrf", "command", "eval", "exec",
-    "deserial", "traversal", "path", "ssrf", "lfi", "rfi",
-    "crypto", "hash", "password", "secret", "token", "auth",
-    "cwe", "owasp", "cve", "vuln",
+    "secret",
+    "inject",
+    "sql",
+    "xss",
+    "csrf",
+    "command",
+    "eval",
+    "exec",
+    "deserial",
+    "ssrf",
+    "crypto",
+    "password",
+    "token",
+    "auth",
+    "owasp",
+    "cwe",
   ];
-  const idLower = checkId.toLowerCase();
-  const hasSecurity = securityKeywords.some((k) => idLower.includes(k));
-  if (hasSecurity || cwe.length > 0 || owasp.length > 0) {
-    return "security";
-  }
+  if (owasp && owasp.length > 0) return "security";
+  if (securityKeywords.some((k) => idLower.includes(k))) return "security";
+  if (idLower.startsWith("secret-")) return "security";
   return "quality";
-}
-
-export async function analyzeCode(code: string, language: string) {
-  const mappedLang = LANGUAGE_MAP[language.toLowerCase()] || language;
-  const ext = getExtension(mappedLang);
-  const tmpFile = path.join("/tmp", `checkaicode_${Date.now()}${ext}`);
-
-  fs.writeFileSync(tmpFile, code);
-
-  let semgrepOutput: any = null;
-  try {
-    const cmd = `semgrep --config auto --json "${tmpFile}" 2>/dev/null`;
-    const stdout = execSync(cmd, { encoding: "utf-8", timeout: 60000 });
-    semgrepOutput = JSON.parse(stdout);
-  } catch (e) {
-    // Semgrep may exit non-zero when findings exist — still parse stdout
-    try {
-      const cmd = `semgrep --config auto --json "${tmpFile}" 2>/dev/null || true`;
-      const stdout = execSync(cmd, { encoding: "utf-8", timeout: 60000 });
-      semgrepOutput = JSON.parse(stdout);
-    } catch (e2) {
-      console.error("Semgrep failed:", e2);
-    }
-  } finally {
-    try {
-      fs.unlinkSync(tmpFile);
-    } catch {
-      // ignore
-    }
-  }
-
-  const issues: Issue[] = [];
-  const suggestions: string[] = [];
-  let score = 100;
-
-  if (semgrepOutput?.results) {
-    for (const result of semgrepOutput.results) {
-      const metadata = result.extra?.metadata || {};
-      const fix = result.extra?.fix || undefined;
-      const docsUrl =
-        metadata?.references?.[0] ||
-        metadata?.source ||
-        metadata?.["semgrep.url"] ||
-        undefined;
-
-      const issue: Issue = {
-        type: mapType(result.check_id, metadata),
-        severity: mapSeverity(result.extra?.severity || "warning"),
-        file: result.path || "input",
-        line: result.start?.line || 1,
-        column: result.start?.col,
-        message: result.extra?.message || result.check_id,
-        fix,
-        docsUrl,
-        ruleId: result.check_id,
-        endLine: result.end?.line,
-      };
-
-      issues.push(issue);
-
-      if (issue.severity === "critical") {
-        score -= 15;
-      } else if (issue.severity === "warning") {
-        score -= 5;
-      } else {
-        score -= 2;
-      }
-
-      if (fix) {
-        suggestions.push(`[${result.check_id}] ${fix}`);
-      }
-    }
-  }
-
-  score = Math.max(0, Math.min(100, score));
-
-  const summary = issues.length === 0
-    ? "No issues found by Semgrep."
-    : `Found ${issues.length} issue${issues.length > 1 ? "s" : ""} (${issues.filter((i) => i.severity === "critical").length} critical, ${issues.filter((i) => i.severity === "warning").length} warning, ${issues.filter((i) => i.severity === "info").length} info).`;
-
-  return {
-    summary,
-    score,
-    issues,
-    suggestions,
-  };
 }
