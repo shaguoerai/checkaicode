@@ -53,6 +53,15 @@ const dict: Record<Lang, Record<string, string>> = {
     analyzing: "Analyzing...",
     resultTitle: "Analysis Result",
     codePlaceholder: "Paste your code here...",
+    // Severity labels
+    sevCritical: "CRITICAL",
+    sevWarning: "WARNING",
+    sevInfo: "INFO",
+    // Result stats
+    resultFound: "Found",
+    resultIssues: "issue(s)",
+    resultScanTime: "Scan time",
+    resultNoIssues: "No issues found",
     // Auth
     authTitle: "Sign In",
     authSubtitle: "Choose your preferred sign-in method",
@@ -101,6 +110,15 @@ const dict: Record<Lang, Record<string, string>> = {
     analyzing: "分析中...",
     resultTitle: "分析结果",
     codePlaceholder: "在此粘贴代码...",
+    // Severity labels
+    sevCritical: "严重",
+    sevWarning: "警告",
+    sevInfo: "信息",
+    // Result stats
+    resultFound: "发现",
+    resultIssues: "个问题",
+    resultScanTime: "扫描耗时",
+    resultNoIssues: "未发现问题",
     // Auth
     authTitle: "登录",
     authSubtitle: "选择你的登录方式",

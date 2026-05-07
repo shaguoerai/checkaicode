@@ -260,7 +260,7 @@ export default function ReviewPage() {
                 {issues.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-slate-500">
                     <CheckCircleIcon />
-                    <p className="mt-2 text-sm">No issues found</p>
+                    <p className="mt-2 text-sm">{t("resultNoIssues")}</p>
                   </div>
                 ) : (
                   issues.map((issue, idx) => (
@@ -279,7 +279,7 @@ export default function ReviewPage() {
                                 : "bg-blue-500/20 text-blue-400"
                           }`}
                         >
-                          {issue.severity}
+                          {issue.severity === "critical" ? t("sevCritical") : issue.severity === "warning" ? t("sevWarning") : t("sevInfo")}
                         </span>
 
                         {/* Content */}
@@ -306,7 +306,7 @@ export default function ReviewPage() {
           {/* Error */}
           {error && (
             <div className="flex flex-1 flex-col rounded-xl border border-red-500/20 bg-red-500/5 p-4 lg:max-w-xl">
-              <h2 className="text-lg font-semibold text-red-400">Error</h2>
+              <h2 className="text-lg font-semibold text-red-400">{t("lang") === "zh" ? "分析出错" : "Error"}</h2>
               <p className="mt-2 text-sm text-red-300">{error}</p>
             </div>
           )}
