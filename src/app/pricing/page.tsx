@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 
 function LangToggle() {
@@ -39,6 +40,7 @@ function FeatureRow({ included, text }: { included: boolean; text: string }) {
 
 export default function PricingPage() {
   const { t } = useI18n();
+  const [isYearly, setIsYearly] = useState(false);
 
   const plans = [
     {
@@ -59,23 +61,24 @@ export default function PricingPage() {
     },
     {
       name: t("proPlan"),
-      price: t("proPrice"),
+      price: isYearly ? t("proPriceYearly") : t("proPrice"),
       desc: t("proDesc"),
       features: [
         { text: t("proUnlimited"), included: true },
         { text: t("proAdvanced"), included: true },
         { text: t("proPriority"), included: true },
-        { text: t("featHallucination"), included: true },
-        { text: t("featVersion"), included: true },
+        { text: "Multi-file scan", included: true },
+        { text: "Fix suggestions", included: true },
         { text: "API access", included: true },
       ],
       cta: t("upgradeToPro"),
       ctaHref: "#",
       highlighted: true,
+      billingToggle: true,
     },
     {
       name: t("teamPlan") || "Team",
-      price: t("teamPrice") || "$49 / month",
+      price: t("teamPrice") || "$29 / month",
       desc: t("teamDesc") || "For organizations with custom needs.",
       features: [
         { text: t("proUnlimited"), included: true },
@@ -131,6 +134,23 @@ export default function PricingPage() {
         </h1>
         <p className="mt-2 text-white/40">{t("pricingSubtitle")}</p>
 
+        {/* Billing toggle */}
+        <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.02] px-2 py-1.5">
+          <button
+            onClick={() => setIsYearly(false)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${!isYearly ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"}`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setIsYearly(true)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${isYearly ? "bg-neon/20 text-neon" : "text-white/40 hover:text-white/60"}`}
+          >
+            Yearly
+            <span className="ml-1.5 rounded bg-neon/10 px-1.5 py-0.5 text-[10px] text-neon">Save 27%</span>
+          </button>
+        </div>
+
         <div className="mt-12 grid max-w-4xl gap-6 sm:grid-cols-3">
           {plans.map((plan) => (
             <div
@@ -161,7 +181,21 @@ export default function PricingPage() {
 
               {plan.ctaHref === "#" ? (
                 <button
-                  onClick={() => alert("Stripe checkout coming soon")}
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/stripe/checkout");
+                      const data = await res.json();
+                      if (data.url) {
+                        window.location.href = data.url;
+                      } else if (data.error === "Unauthorized") {
+                        window.location.href = "/auth/signin";
+                      } else {
+                        alert("Checkout unavailable. Please try again later.");
+                      }
+                    } catch {
+                      alert("Checkout unavailable. Please try again later.");
+                    }
+                  }}
                   className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
                     plan.highlighted
                       ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"

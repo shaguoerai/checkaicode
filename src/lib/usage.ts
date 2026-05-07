@@ -1,15 +1,38 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const FREE_DAILY_LIMIT = 5;
+const ANON_DAILY_LIMIT = 3;
 
-export async function checkUsageLimit(userId?: string): Promise<{
+// 简单的内存 IP 限流存储（生产环境建议换 Redis）
+const ipUsageMap = new Map<string, { count: number; date: string }>();
+
+function getClientIP(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  const realIP = req.headers.get("x-real-ip");
+  if (realIP) return realIP.trim();
+  return "unknown";
+}
+
+export async function checkUsageLimit(
+  userId: string | null | undefined,
+  req?: Request
+): Promise<{
   allowed: boolean;
   remaining: number;
   isPro: boolean;
 }> {
   if (!userId) {
-    return { allowed: false, remaining: 0, isPro: false };
+    // 未登录用户：按 IP 限流，每日 3 次
+    const ip = req ? getClientIP(req) : "unknown";
+    const today = new Date().toISOString().split("T")[0];
+    const record = ipUsageMap.get(ip);
+    if (!record || record.date !== today) {
+      ipUsageMap.set(ip, { count: 0, date: today });
+      return { allowed: true, remaining: ANON_DAILY_LIMIT, isPro: false };
+    }
+    const remaining = Math.max(0, ANON_DAILY_LIMIT - record.count);
+    return { allowed: remaining > 0, remaining, isPro: false };
   }
 
   const user = await prisma.user.findUnique({
@@ -40,7 +63,23 @@ export async function checkUsageLimit(userId?: string): Promise<{
   return { allowed: remaining > 0, remaining, isPro: false };
 }
 
-export async function incrementUsage(userId: string): Promise<void> {
+export async function incrementUsage(
+  userId: string | null,
+  req?: Request
+): Promise<void> {
+  if (!userId) {
+    // 未登录用户：按 IP 计数
+    const ip = req ? getClientIP(req) : "unknown";
+    const today = new Date().toISOString().split("T")[0];
+    const record = ipUsageMap.get(ip);
+    if (!record || record.date !== today) {
+      ipUsageMap.set(ip, { count: 1, date: today });
+    } else {
+      record.count += 1;
+    }
+    return;
+  }
+
   const today = new Date().toISOString().split("T")[0];
   await prisma.usage.upsert({
     where: { userId_date: { userId, date: today } },

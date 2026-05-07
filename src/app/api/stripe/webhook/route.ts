@@ -7,6 +7,8 @@ const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2026-04-22.dahli
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   if (!stripe) {
     return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });

@@ -20,17 +20,27 @@ export default function TermsPage() {
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950">
+    <div className="flex flex-col min-h-screen bg-[#050505]">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 py-4">
-        <Link href="/" className="text-lg font-semibold text-white">
-          Check AI Code
-        </Link>
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded bg-neon/20 flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ee787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <Link href="/" className="text-lg font-semibold text-white tracking-tight">
+            Check AI Code
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
+          <Link href="/review" className="text-sm text-white/60 hover:text-white transition">
+            {t("reviewTitle")}
+          </Link>
           <LangToggle />
           <Link
             href="/auth/signin"
-            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-white/90"
+            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-[#050505] transition hover:bg-white/90"
           >
             {t("signIn")}
           </Link>
@@ -41,79 +51,71 @@ export default function TermsPage() {
       <main className="flex-1 px-6 py-12">
         <div className="mx-auto max-w-3xl">
           <h1 className="text-3xl font-bold text-white sm:text-4xl">
-            {t("termsTitle")}
+            Terms of Service
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
-            {t("termsLastUpdated")}
+          <p className="mt-2 text-sm text-white/40">
+            Last updated: May 2026
           </p>
 
-          <div className="mt-10 space-y-10 text-slate-300">
+          <div className="mt-10 space-y-10 text-white/60">
             <section>
-              <h2 className="text-xl font-semibold text-white">
-                {t("termsAcceptance")}
-              </h2>
-              <p className="mt-3 leading-relaxed">{t("termsAcceptanceDesc")}</p>
+              <h2 className="text-xl font-semibold text-white">1. Service description</h2>
+              <p className="mt-3 leading-relaxed">
+                Check AI Code provides automated code scanning to detect potential issues in AI-generated code. Results are for reference only — they do not constitute professional security auditing or legal advice.
+              </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white">
-                {t("termsService")}
-              </h2>
-              <p className="mt-3 leading-relaxed">{t("termsServiceDesc")}</p>
+              <h2 className="text-xl font-semibold text-white">2. Your responsibility</h2>
+              <p className="mt-3 leading-relaxed">
+                You are solely responsible for the security and correctness of the code you deploy. Our scan results may miss issues or produce false positives. Always review code manually before production use.
+              </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white">
-                {t("termsData")}
-              </h2>
-              <p className="mt-3 leading-relaxed">{t("termsDataDesc")}</p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold text-white">
-                {t("termsProhibited")}
-              </h2>
+              <h2 className="text-xl font-semibold text-white">3. Prohibited use</h2>
               <ul className="mt-3 list-disc space-y-2 pl-5">
-                <li>{t("termsProhibited1")}</li>
-                <li>{t("termsProhibited2")}</li>
-                <li>{t("termsProhibited3")}</li>
+                <li>Uploading malicious code intended to harm our infrastructure</li>
+                <li>Reverse engineering or scraping the service at scale</li>
+                <li>Reselling access without written permission</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white">
-                {t("termsLiability")}
-              </h2>
-              <p className="mt-3 leading-relaxed">{t("termsLiabilityDesc")}</p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold text-white">
-                {t("termsTermination")}
-              </h2>
-              <p className="mt-3 leading-relaxed">{t("termsTerminationDesc")}</p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold text-white">
-                {t("termsChanges")}
-              </h2>
-              <p className="mt-3 leading-relaxed">{t("termsChangesDesc")}</p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold text-white">
-                {t("termsContact")}
-              </h2>
+              <h2 className="text-xl font-semibold text-white">4. Refunds</h2>
               <p className="mt-3 leading-relaxed">
-                {t("termsContactDesc")}{" "}
-                <a
-                  href="mailto:shaguoer@gmail.com"
-                  className="text-white underline underline-offset-4 hover:text-white/80"
-                >
+                Pro subscriptions come with a 14-day money-back guarantee. No questions asked. Contact us via email to request a refund.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold text-white">5. Liability limit</h2>
+              <p className="mt-3 leading-relaxed">
+                To the maximum extent permitted by law, our total liability is limited to the lesser of (a) $100 USD or (b) the total amount you paid in the 12 months preceding the claim. We are not liable for damages arising from your reliance on scan results.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold text-white">6. Termination</h2>
+              <p className="mt-3 leading-relaxed">
+                Either party may terminate the service relationship at any time. Upon termination, your account data will be deleted within 30 days (or immediately upon request).
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold text-white">7. Governing law</h2>
+              <p className="mt-3 leading-relaxed">
+                These terms are governed by the laws of the People's Republic of China. Any disputes shall be resolved in the courts of Beijing, China.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold text-white">8. Contact</h2>
+              <p className="mt-3 leading-relaxed">
+                Questions? Email{" "}
+                <a href="mailto:shaguoer@gmail.com" className="text-neon underline underline-offset-4 hover:text-neon/80">
                   shaguoer@gmail.com
-                </a>
-                .
+                </a>.
               </p>
             </section>
           </div>
@@ -123,16 +125,12 @@ export default function TermsPage() {
       {/* Footer */}
       <footer className="border-t border-white/10 px-6 py-6">
         <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 sm:flex-row">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-white/30">
             © {new Date().getFullYear()} Check AI Code
           </p>
-          <div className="flex items-center gap-4 text-sm text-slate-400">
-            <Link href="/privacy" className="transition hover:text-white">
-              {t("privacyLink")}
-            </Link>
-            <Link href="/terms" className="transition hover:text-white">
-              {t("termsLink")}
-            </Link>
+          <div className="flex items-center gap-4 text-sm text-white/40">
+            <Link href="/privacy" className="transition hover:text-white">Privacy</Link>
+            <Link href="/terms" className="transition hover:text-white">Terms</Link>
           </div>
         </div>
       </footer>

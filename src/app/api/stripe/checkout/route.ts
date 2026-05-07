@@ -6,6 +6,8 @@ import Stripe from "stripe";
 const stripeKey = process.env.STRIPE_SECRET_KEY || "";
 const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2026-04-22.dahlia" as any }) : null;
 
+export const runtime = "nodejs";
+
 export async function GET() {
   if (!stripe) {
     return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
