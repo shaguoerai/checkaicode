@@ -82,7 +82,7 @@ function detectLang(filename: string): string {
 }
 
 export default function ReviewPage() {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("auto");
   const [issues, setIssues] = useState<Issue[] | null>(null);
@@ -246,7 +246,7 @@ export default function ReviewPage() {
                         : "bg-red-500/20 text-red-400"
                   }`}
                 >
-                  Score: {score}/100
+                  {lang === "zh" ? `分数: ${score}/100` : `Score: ${score}/100`}
                 </span>
               </div>
 
@@ -306,7 +306,7 @@ export default function ReviewPage() {
           {/* Error */}
           {error && (
             <div className="flex flex-1 flex-col rounded-xl border border-red-500/20 bg-red-500/5 p-4 lg:max-w-xl">
-              <h2 className="text-lg font-semibold text-red-400">{t("lang") === "zh" ? "分析出错" : "Error"}</h2>
+              <h2 className="text-lg font-semibold text-red-400">{lang === "zh" ? "分析出错" : "Error"}</h2>
               <p className="mt-2 text-sm text-red-300">{error}</p>
             </div>
           )}
