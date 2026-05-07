@@ -10,7 +10,7 @@ function LangToggle() {
   return (
     <button
       onClick={() => setLang(lang === "en" ? "zh" : "en")}
-      className="rounded-md border border-white/20 px-2 py-1 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+      className="rounded-md border border-white/15 px-2.5 py-1 text-sm font-medium text-white/70 transition hover:border-neon/40 hover:text-neon"
       aria-label="Toggle language"
     >
       {t("langToggle")}
@@ -81,6 +81,66 @@ function detectLang(filename: string): string {
   return EXT_TO_LANG[ext] || "auto";
 }
 
+/* Severity config with colors */
+const SEVERITY_CONFIG = {
+  critical: {
+    labelColor: "text-red-400",
+    bgColor: "bg-red-500/10",
+    borderColor: "border-red-500/20",
+    barColor: "bg-red-500",
+    badgeBg: "bg-red-500/15",
+  },
+  warning: {
+    labelColor: "text-amber-400",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/20",
+    barColor: "bg-amber-500",
+    badgeBg: "bg-amber-500/15",
+  },
+  info: {
+    labelColor: "text-sky-400",
+    bgColor: "bg-sky-500/10",
+    borderColor: "border-sky-500/20",
+    barColor: "bg-sky-500",
+    badgeBg: "bg-sky-500/15",
+  },
+};
+
+/* Score ring component */
+function ScoreRing({ score }: { score: number }) {
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 80 ? "#7ee787" : score >= 50 ? "#fbbf24" : "#f87171";
+
+  return (
+    <div className="relative flex items-center justify-center">
+      <svg width="84" height="84" viewBox="0 0 84 84" className="-rotate-90">
+        <circle
+          cx="42" cy="42" r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth="6"
+        />
+        <circle
+          cx="42" cy="42" r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="transition-all duration-1000"
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center">
+        <span className="text-xl font-bold" style={{ color }}>{score}</span>
+        <span className="text-[10px] text-white/30">/100</span>
+      </div>
+    </div>
+  );
+}
+
 export default function ReviewPage() {
   const { lang, t } = useI18n();
   const [code, setCode] = useState("");
@@ -147,7 +207,6 @@ export default function ReviewPage() {
         setSummary(data.summary || "");
         setScore(data.score ?? 100);
       } else if (data.error && data.lines) {
-        // 行数超限，友好提示
         setError(
           lang === "zh"
             ? `文件共 ${data.lines} 行，免费版仅支持 ${data.maxLines} 行以内的文件。去掉 ${data.overBy} 行即可免费体验。`
@@ -163,18 +222,32 @@ export default function ReviewPage() {
     }
   };
 
+  const criticalCount = issues?.filter((i) => i.severity === "critical").length ?? 0;
+  const warningCount = issues?.filter((i) => i.severity === "warning").length ?? 0;
+  const infoCount = issues?.filter((i) => i.severity === "info").length ?? 0;
+
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950">
+    <div className="flex flex-col min-h-screen bg-[#050505]">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 py-4">
-        <Link href="/" className="text-lg font-semibold text-white">
-          Check AI Code
-        </Link>
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded bg-neon/20 flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ee787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <Link href="/" className="text-lg font-semibold text-white tracking-tight">
+            Check AI Code
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
+          <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition">
+            {t("viewPricing")}
+          </Link>
           <LangToggle />
           <Link
             href="/auth/signin"
-            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-white/90"
+            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-[#050505] transition hover:bg-white/90"
           >
             {t("signIn")}
           </Link>
@@ -183,20 +256,22 @@ export default function ReviewPage() {
 
       {/* Content */}
       <main className="flex flex-1 flex-col px-6 py-8">
-        <h1 className="text-2xl font-bold text-white">{t("reviewTitle")}</h1>
-        <p className="mt-1 text-slate-400">{t("reviewSubtitle")}</p>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white">{t("reviewTitle")}</h1>
+          <p className="mt-1 text-white/40">{t("reviewSubtitle")}</p>
+        </div>
 
-        <div className="mt-6 flex flex-1 flex-col gap-4 lg:flex-row">
+        <div className="flex flex-1 flex-col gap-4 lg:flex-row">
           {/* Editor */}
           <div
-            className="flex flex-1 flex-col rounded-xl border border-white/10 bg-white/5 p-4"
+            className="flex flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-4"
             onDrop={onDrop}
             onDragOver={(e) => e.preventDefault()}
           >
             <div className="mb-3 flex items-center gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-3 text-sm font-medium text-white transition hover:bg-white/10"
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-medium text-white transition hover:border-neon/30 hover:bg-white/8"
               >
                 <UploadIcon />
                 {t("uploadFile")}
@@ -204,10 +279,10 @@ export default function ReviewPage() {
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="h-9 rounded-lg border border-white/20 bg-white/5 px-3 text-sm text-white outline-none focus:ring-1 focus:ring-white/30"
+                className="h-9 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white outline-none focus:border-neon/30"
               >
                 {LANG_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value} className="bg-slate-900 text-white">
+                  <option key={opt.value} value={opt.value} className="bg-[#0a0a0a] text-white">
                     {opt.label}
                   </option>
                 ))}
@@ -224,87 +299,100 @@ export default function ReviewPage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder={t("codePlaceholder")}
-              className="min-h-[320px] flex-1 resize-none rounded-lg bg-slate-900 p-4 font-mono text-sm leading-relaxed text-slate-200 outline-none ring-1 ring-white/10 focus:ring-white/30"
+              className="min-h-[320px] flex-1 resize-none rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
               spellCheck={false}
             />
             <button
               onClick={analyze}
               disabled={loading || !code.trim()}
-              className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-white px-6 text-sm font-semibold text-slate-950 transition hover:bg-white/90 disabled:opacity-40"
+              className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-neon px-6 text-sm font-semibold text-[#050505] transition hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)] disabled:opacity-40"
             >
-              {loading ? t("analyzing") : t("analyze")}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Spinner />
+                  {t("analyzing")}
+                </span>
+              ) : (
+                t("analyze")
+              )}
             </button>
           </div>
 
           {/* Result */}
           {issues !== null && (
-            <div className="flex flex-1 flex-col rounded-xl border border-white/10 bg-white/5 p-4 lg:max-w-xl">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">
-                  {t("resultTitle")}
-                </h2>
-                {/* Score badge */}
-                <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${
-                    score >= 80
-                      ? "bg-green-500/20 text-green-400"
-                      : score >= 50
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : "bg-red-500/20 text-red-400"
-                  }`}
-                >
-                  {lang === "zh" ? `分数: ${score}/100` : `Score: ${score}/100`}
-                </span>
+            <div className="flex flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-4 lg:max-w-xl">
+              {/* Stats header */}
+              <div className="mb-4 flex items-center gap-4">
+                <ScoreRing score={score} />
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-white">
+                    {t("resultTitle")}
+                  </h2>
+                  {summary && (
+                    <p className="mt-0.5 text-xs text-white/40">{summary}</p>
+                  )}
+                </div>
               </div>
 
-              {/* Summary */}
-              {summary && (
-                <p className="mb-3 text-sm text-slate-400">{summary}</p>
+              {/* Severity counts */}
+              {issues.length > 0 && (
+                <div className="mb-4 grid grid-cols-3 gap-2">
+                  <div className="rounded-lg border border-red-500/15 bg-red-500/5 p-2 text-center">
+                    <div className="text-lg font-bold text-red-400">{criticalCount}</div>
+                    <div className="text-[10px] text-red-400/60 uppercase">{t("sevCritical")}</div>
+                  </div>
+                  <div className="rounded-lg border border-amber-500/15 bg-amber-500/5 p-2 text-center">
+                    <div className="text-lg font-bold text-amber-400">{warningCount}</div>
+                    <div className="text-[10px] text-amber-400/60 uppercase">{t("sevWarning")}</div>
+                  </div>
+                  <div className="rounded-lg border border-sky-500/15 bg-sky-500/5 p-2 text-center">
+                    <div className="text-lg font-bold text-sky-400">{infoCount}</div>
+                    <div className="text-[10px] text-sky-400/60 uppercase">{t("sevInfo")}</div>
+                  </div>
+                </div>
               )}
 
               {/* Issues list */}
-              <div className="flex-1 overflow-auto space-y-2">
+              <div className="flex-1 overflow-auto space-y-2 max-h-[480px]">
                 {issues.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                  <div className="flex flex-col items-center justify-center py-12 text-white/20">
                     <CheckCircleIcon />
-                    <p className="mt-2 text-sm">{t("resultNoIssues")}</p>
+                    <p className="mt-3 text-sm">{t("resultNoIssues")}</p>
                   </div>
                 ) : (
-                  issues.map((issue, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-lg border border-white/5 bg-slate-900/50 p-3"
-                    >
-                      <div className="flex items-start gap-2">
-                        {/* Severity badge */}
-                        <span
-                          className={`mt-0.5 inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-                            issue.severity === "critical"
-                              ? "bg-red-500/20 text-red-400"
-                              : issue.severity === "warning"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-blue-500/20 text-blue-400"
-                          }`}
-                        >
-                          {issue.severity === "critical" ? t("sevCritical") : issue.severity === "warning" ? t("sevWarning") : t("sevInfo")}
-                        </span>
-
-                        {/* Content */}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-slate-200">
-                            {issue.message}
-                          </p>
-                          <p className="mt-0.5 text-[11px] text-slate-500">
-                            L{issue.line}
-                            {issue.endLine && issue.endLine !== issue.line
-                              ? `-${issue.endLine}`
-                              : ""}{" "}
-                            · {issue.ruleId}
-                          </p>
+                  issues.map((issue, idx) => {
+                    const cfg = SEVERITY_CONFIG[issue.severity] ?? SEVERITY_CONFIG.info;
+                    return (
+                      <div
+                        key={idx}
+                        className={`relative rounded-lg border ${cfg.borderColor} ${cfg.bgColor} p-3 overflow-hidden`}
+                      >
+                        {/* Left color bar */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.barColor}`} />
+                        <div className="pl-3">
+                          <div className="flex items-start gap-2">
+                            <span
+                              className={`mt-0.5 inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${cfg.labelColor} ${cfg.badgeBg}`}
+                            >
+                              {issue.severity === "critical" ? t("sevCritical") : issue.severity === "warning" ? t("sevWarning") : t("sevInfo")}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm text-white/80 leading-relaxed">
+                                {issue.message}
+                              </p>
+                              <p className="mt-1 text-[11px] text-white/30 font-mono">
+                                L{issue.line}
+                                {issue.endLine && issue.endLine !== issue.line
+                                  ? `-${issue.endLine}`
+                                  : ""}{" "}
+                                · {issue.ruleId}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -314,7 +402,7 @@ export default function ReviewPage() {
           {error && (
             <div className="flex flex-1 flex-col rounded-xl border border-red-500/20 bg-red-500/5 p-4 lg:max-w-xl">
               <h2 className="text-lg font-semibold text-red-400">{lang === "zh" ? "分析出错" : "Error"}</h2>
-              <p className="mt-2 text-sm text-red-300">{error}</p>
+              <p className="mt-2 text-sm text-red-300/80">{error}</p>
             </div>
           )}
         </div>
@@ -338,6 +426,14 @@ function CheckCircleIcon() {
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
       <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
   );
 }

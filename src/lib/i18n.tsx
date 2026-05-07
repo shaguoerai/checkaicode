@@ -18,10 +18,14 @@ const dict: Record<Lang, Record<string, string>> = {
     signIn: "Sign In",
     // Hero
     heroTitle: "Check AI Code",
-    heroSubtitle: "Detect hallucinations, version conflicts \u0026 security risks in AI-generated code — before it reaches production.",
+    heroTitleHighlight: "Detect Hallucinations & Risks",
+    heroSubtitle: "Detect hallucinations, version conflicts & security risks in AI-generated code — before it reaches production.",
+    heroBadge: "Real-time Analysis Engine",
     startFreeReview: "Start Free Review",
     viewPricing: "View Pricing",
     // Features
+    featuresTitle: "Core Capabilities",
+    featuresSubtitle: "Deep analysis built specifically for AI-generated code",
     featHallucination: "Hallucination Detection",
     featHallucinationDesc: "Spot fake APIs, non-existent imports, and imaginary functions that LLMs love to invent.",
     featVersion: "Version Compatibility",
@@ -45,6 +49,10 @@ const dict: Record<Lang, Record<string, string>> = {
     proAdvanced: "Advanced security scan",
     proPriority: "Priority support",
     upgradeToPro: "Upgrade to Pro",
+    teamPlan: "Team",
+    teamPrice: "$49 / month",
+    teamDesc: "For organizations with custom needs.",
+    contactSales: "Contact Sales",
     // Review
     reviewTitle: "Code Review",
     reviewSubtitle: "Paste code or upload a file to analyze.",
@@ -69,16 +77,23 @@ const dict: Record<Lang, Record<string, string>> = {
     continueGitHub: "Continue with GitHub",
     // Misc
     langToggle: "中",
+    // CTA
+    ctaTitle: "Ready to level up your code quality?",
+    ctaSubtitle: "Join thousands of developers using AI to detect AI-generated code issues.",
   },
   zh: {
     // Nav
     signIn: "登录",
     // Hero
     heroTitle: "AI 代码审查",
+    heroTitleHighlight: "检测幻觉与风险",
     heroSubtitle: "在 AI 生成的代码进入生产环境之前，检测幻觉、版本冲突与安全风险。",
+    heroBadge: "实时分析引擎",
     startFreeReview: "免费开始审查",
     viewPricing: "查看定价",
     // Features
+    featuresTitle: "核心能力",
+    featuresSubtitle: "专为 AI 生成代码设计的深度分析工具",
     featHallucination: "幻觉检测",
     featHallucinationDesc: "识别虚构 API、不存在的导入和 LLM 喜欢编造的函数。",
     featVersion: "版本兼容性",
@@ -102,6 +117,10 @@ const dict: Record<Lang, Record<string, string>> = {
     proAdvanced: "高级安全扫描",
     proPriority: "优先支持",
     upgradeToPro: "升级到专业版",
+    teamPlan: "团队版",
+    teamPrice: "$49 / 月",
+    teamDesc: "适合有定制需求的企业组织。",
+    contactSales: "联系销售",
     // Review
     reviewTitle: "代码审查",
     reviewSubtitle: "粘贴代码或上传文件进行分析。",
@@ -126,6 +145,9 @@ const dict: Record<Lang, Record<string, string>> = {
     continueGitHub: "使用 GitHub 登录",
     // Misc
     langToggle: "EN",
+    // CTA
+    ctaTitle: "准备好提升代码质量了吗？",
+    ctaSubtitle: "加入数千名开发者的行列，用 AI 检测 AI 生成的代码问题。",
   },
 };
 
