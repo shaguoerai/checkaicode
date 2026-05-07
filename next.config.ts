@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  env: {
+    MODAL_URL: "https://shaguoer--code-scanner-fastapi-app.modal.run",
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
