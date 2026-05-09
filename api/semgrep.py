@@ -14,6 +14,16 @@ LANG_EXT = {
     "typescript": ".ts",
     "java": ".java",
     "go": ".go",
+    "ruby": ".rb",
+    "php": ".php",
+    "c": ".c",
+    "cpp": ".cpp",
+    "rust": ".rs",
+    "kotlin": ".kt",
+    "scala": ".scala",
+    "swift": ".swift",
+    "c#": ".cs",
+    "csharp": ".cs",
 }
 
 RULESETS = [
@@ -61,6 +71,8 @@ class handler(BaseHTTPRequestHandler):
                 f.write(code)
 
             cmd = [
+                sys.executable,
+                "-m",
                 "semgrep",
                 "scan",
                 "--json",
