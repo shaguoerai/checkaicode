@@ -26,11 +26,27 @@ LANG_EXT = {
     "csharp": ".cs",
 }
 
-RULESETS = [
+COMMON_RULESETS = [
     "p/default",
     "p/owasp-top-ten",
-    "p/javascript",
+    "p/r2c-security-audit",
+    "p/command-injection",
+    "p/sql-injection",
+    "p/xss",
 ]
+
+LANGUAGE_RULESETS = {
+    "python": ["p/python", "p/flask"],
+    "javascript": ["p/javascript", "p/react"],
+    "typescript": ["p/typescript", "p/react"],
+    "java": ["p/java"],
+    "go": ["p/go"],
+}
+
+
+def rulesets_for(language):
+    rulesets = COMMON_RULESETS + LANGUAGE_RULESETS.get(language, [])
+    return list(dict.fromkeys(rulesets))
 
 
 def send_json(handler, status, payload):
@@ -70,24 +86,47 @@ class handler(BaseHTTPRequestHandler):
             with open(src_file, "w", encoding="utf-8") as f:
                 f.write(code)
 
+            semgrep_home = os.path.join(tmp_dir, ".semgrep")
+            semgrep_cache = os.path.join(tmp_dir, ".cache")
+            os.makedirs(semgrep_home, exist_ok=True)
+            os.makedirs(semgrep_cache, exist_ok=True)
+
             cmd = [
                 sys.executable,
-                "-m",
-                "semgrep",
+                "-c",
+                "from semgrep.console_scripts.pysemgrep import main; main()",
                 "scan",
                 "--json",
                 "--quiet",
             ]
 
-            for ruleset in RULESETS:
+            for ruleset in rulesets_for(language):
                 cmd.extend(["--config", ruleset])
 
             cmd.append(src_file)
+            env = {
+                **os.environ,
+                "HOME": tmp_dir,
+                "XDG_CONFIG_HOME": tmp_dir,
+                "XDG_CACHE_HOME": semgrep_cache,
+                "SEMGREP_SETTINGS_FILE": os.path.join(semgrep_home, "settings.yml"),
+                "SEMGREP_LOG_FILE": os.path.join(semgrep_home, "semgrep.log"),
+                "SEMGREP_ENABLE_VERSION_CHECK": "0",
+                "SEMGREP_SEND_METRICS": "off",
+                "PYTHONPATH": os.pathsep.join(
+                    [
+                        "/var/task/_vendor",
+                        "/var/task",
+                        os.environ.get("PYTHONPATH", ""),
+                    ]
+                ),
+            }
 
             started = time.time()
             proc = subprocess.run(
                 cmd,
                 cwd=tmp_dir,
+                env=env,
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -113,7 +152,7 @@ class handler(BaseHTTPRequestHandler):
                     "errors": output.get("errors", []),
                     "scanTimeMs": scan_time_ms,
                     "exitCode": proc.returncode,
-                    "stderr": proc.stderr[-2000:] if proc.returncode not in (0, 1) else "",
+                    "stderr": proc.stderr[-4000:] if proc.returncode != 0 and not output.get("results") else "",
                 },
             )
         except subprocess.TimeoutExpired:

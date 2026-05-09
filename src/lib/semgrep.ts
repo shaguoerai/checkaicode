@@ -88,6 +88,11 @@ function mapCheckIdToType(checkId: string): "security" | "quality" | "dependency
   return "quality";
 }
 
+function cweReferenceUrl(cwe: string | undefined): string | undefined {
+  const match = cwe?.match(/CWE-(\d+)/i);
+  return match ? `https://cwe.mitre.org/data/definitions/${match[1]}.html` : undefined;
+}
+
 function parseSemgrepOutput(output: SemgrepApiOutput, tmpDir: string) {
   const issues = output.results.map((r) => {
     const severity = mapSemgrepSeverity(
@@ -109,9 +114,7 @@ function parseSemgrepOutput(output: SemgrepApiOutput, tmpDir: string) {
         : undefined,
       fixCode: fix || undefined,
       codeSnippet: r.extra?.lines?.trim() || undefined,
-      referenceUrl: r.extra?.metadata?.cwe?.[0]
-        ? `https://cwe.mitre.org/data/definitions/${r.extra.metadata.cwe[0].replace("CWE-", "")}.html`
-        : undefined,
+      referenceUrl: cweReferenceUrl(r.extra?.metadata?.cwe?.[0]),
     };
   });
 
@@ -141,17 +144,22 @@ export async function runSemgrep(code: string, language: string): Promise<{
   scanTimeMs: number;
   error?: string;
 }> {
-  // Fallback: if SEMgrep CLI is available locally, use it directly
-  try {
-    execSync("which semgrep", { encoding: "utf-8", stdio: "pipe" });
-    return runSemgrepLocal(code, language);
-  } catch {
-    // CLI not available, use HTTP API
+  // Local development may opt in to a machine-installed Semgrep CLI.
+  // Production defaults to the Python Function because the Node runtime
+  // cannot reliably execute the Python Semgrep package.
+  if (process.env.SEMGREP_USE_LOCAL === "1") {
+    try {
+      execSync("which semgrep", { encoding: "utf-8", stdio: "pipe" });
+      return runSemgrepLocal(code, language);
+    } catch {
+      // CLI not available, use HTTP API
+    }
   }
 
   const baseUrl =
     process.env.SEMGREP_API_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL ? "https://checkaicode.com" : "http://localhost:3000");
 
   const headers: Record<string, string> = {
     "content-type": "application/json",
@@ -259,9 +267,7 @@ async function runSemgrepLocal(code: string, language: string): Promise<{
           : undefined,
         fixCode: fix || undefined,
         codeSnippet: r.extra?.lines?.trim() || undefined,
-        referenceUrl: r.extra?.metadata?.cwe?.[0]
-          ? `https://cwe.mitre.org/data/definitions/${r.extra.metadata.cwe[0].replace("CWE-", "")}.html`
-          : undefined,
+        referenceUrl: cweReferenceUrl(r.extra?.metadata?.cwe?.[0]),
       };
     });
 
@@ -290,9 +296,7 @@ async function runSemgrepLocal(code: string, language: string): Promise<{
               : undefined,
             fixCode: fix || undefined,
             codeSnippet: r.extra?.lines?.trim() || undefined,
-            referenceUrl: r.extra?.metadata?.cwe?.[0]
-              ? `https://cwe.mitre.org/data/definitions/${r.extra.metadata.cwe[0].replace("CWE-", "")}.html`
-              : undefined,
+            referenceUrl: cweReferenceUrl(r.extra?.metadata?.cwe?.[0]),
           };
         });
         return { issues, scanTimeMs };
