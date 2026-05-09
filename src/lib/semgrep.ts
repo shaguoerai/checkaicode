@@ -53,6 +53,28 @@ const LANG_EXT: Record<string, string> = {
   csharp: ".cs",
 };
 
+/**
+ * 从代码内容或文件名推断语言
+ */
+function detectLanguage(code: string, filename?: string): string {
+  // 优先从文件名推断
+  if (filename) {
+    const ext = filename.split(".").pop()?.toLowerCase();
+    if (ext) {
+      const langByExt = Object.entries(LANG_EXT).find(([, e]) => e === `.${ext}`);
+      if (langByExt) return langByExt[0];
+    }
+  }
+  // 从代码内容推断
+  if (code.includes("def ") || code.includes("import ") || code.includes("print(")) return "python";
+  if (code.includes("package main") || code.includes("func ")) return "go";
+  if (code.includes("public class ") || code.includes("import java.")) return "java";
+  if (code.includes("interface ") && code.includes(": ")) return "typescript";
+  if (code.includes("const ") || code.includes("let ") || code.includes("var ")) return "javascript";
+  if (code.includes("function ") || code.includes("=>")) return "javascript";
+  return "javascript"; // 默认
+}
+
 function mapSemgrepSeverity(s: string | undefined): "critical" | "warning" | "info" {
   if (!s) return "warning";
   const sl = s.toLowerCase();
@@ -169,12 +191,16 @@ export async function runSemgrep(code: string, language: string): Promise<{
     headers["x-semgrep-api-secret"] = process.env.SEMGREP_API_SECRET;
   }
 
+  const detectedLang = language === "auto" || !language
+    ? detectLanguage(code)
+    : language;
+
   const res = await fetch(`${baseUrl}/api/semgrep`, {
     method: "POST",
     headers,
     body: JSON.stringify({
       code,
-      language,
+      language: detectedLang,
       filename: "input",
     }),
   });
@@ -188,6 +214,45 @@ export async function runSemgrep(code: string, language: string): Promise<{
 
   // Use a dummy tmpDir for path replacement (Python Function already replaced tmp_dir with "input")
   return parseSemgrepOutput(output, "input");
+}
+
+// ── 14 套规则集，按语言动态加载 ──
+const COMMON_RULESETS = [
+  "p/default",
+  "p/owasp-top-ten",
+  "p/command-injection",
+  "p/jwt",
+  "p/secrets",
+  "p/supply-chain",
+];
+
+const LANGUAGE_RULESETS: Record<string, string[]> = {
+  javascript: ["p/javascript", "p/react", "p/nodejs"],
+  typescript: ["p/typescript", "p/react", "p/nodejs"],
+  python: ["p/python"],
+  go: ["p/golang"],
+  java: ["p/java"],
+};
+
+const EXCLUDED_RULESETS = new Set([
+  "p/ssrf",
+  "p/r2c-security-audit",
+  "p/sql-injection",
+  "p/xss",
+]);
+
+function rulesetsFor(language: string): string[] {
+  const lang = language.toLowerCase();
+  const rulesets = [...COMMON_RULESETS, ...(LANGUAGE_RULESETS[lang] || [])];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const r of rulesets) {
+    if (!seen.has(r) && !EXCLUDED_RULESETS.has(r)) {
+      seen.add(r);
+      result.push(r);
+    }
+  }
+  return result;
 }
 
 async function runSemgrepLocal(code: string, language: string): Promise<{
@@ -211,29 +276,14 @@ async function runSemgrepLocal(code: string, language: string): Promise<{
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "checkaicode-semgrep-"));
   const srcFile = path.join(tmpDir, `target${ext}`);
 
-  const SEMGREP_RULESETS = [
-    "p/default",
-    "p/owasp-top-ten",
-    "p/r2c-security-audit",
-    "p/command-injection",
-    "p/sql-injection",
-    "p/xss",
-    "p/ssrf",
-    "p/python",
-    "p/javascript",
-    "p/typescript",
-    "p/java",
-    "p/go",
-    "p/react",
-    "p/flask",
-  ];
+  const activeRulesets = rulesetsFor(language);
 
   try {
     fs.writeFileSync(srcFile, code, "utf-8");
 
     const startTime = Date.now();
     const cmdParts = ["semgrep", "--json", "--quiet"];
-    for (const rs of SEMGREP_RULESETS) {
+    for (const rs of activeRulesets) {
       cmdParts.push("--config", rs);
     }
     cmdParts.push(srcFile);

@@ -26,27 +26,42 @@ LANG_EXT = {
     "csharp": ".cs",
 }
 
+# ── 14 套规则集，按语言动态加载 ──
+# 通用规则（所有语言都跑）
 COMMON_RULESETS = [
     "p/default",
     "p/owasp-top-ten",
-    "p/r2c-security-audit",
     "p/command-injection",
-    "p/sql-injection",
-    "p/xss",
+    "p/jwt",
+    "p/secrets",
+    "p/supply-chain",
 ]
 
+# 语言专属规则
 LANGUAGE_RULESETS = {
-    "python": ["p/python", "p/flask"],
-    "javascript": ["p/javascript", "p/react"],
-    "typescript": ["p/typescript", "p/react"],
+    "javascript": ["p/javascript", "p/react", "p/nodejs"],
+    "typescript": ["p/typescript", "p/react", "p/nodejs"],
+    "python": ["p/python"],
+    "go": ["p/golang"],
     "java": ["p/java"],
-    "go": ["p/go"],
 }
+
+# 被排除的规则集（已知不稳定或重复）
+EXCLUDED_RULESETS = {"p/ssrf", "p/r2c-security-audit", "p/sql-injection", "p/xss"}
 
 
 def rulesets_for(language):
-    rulesets = COMMON_RULESETS + LANGUAGE_RULESETS.get(language, [])
-    return list(dict.fromkeys(rulesets))
+    """返回该语言应加载的规则集列表（去重，不含被排除项）"""
+    lang = language.lower()
+    rulesets = COMMON_RULESETS + LANGUAGE_RULESETS.get(lang, [])
+    # 去重并保持顺序
+    seen = set()
+    result = []
+    for r in rulesets:
+        if r not in seen and r not in EXCLUDED_RULESETS:
+            seen.add(r)
+            result.append(r)
+    return result
 
 
 def send_json(handler, status, payload):
@@ -91,6 +106,17 @@ class handler(BaseHTTPRequestHandler):
             os.makedirs(semgrep_home, exist_ok=True)
             os.makedirs(semgrep_cache, exist_ok=True)
 
+            # ── 本地规则优先，远端 fallback ──
+            rulesets = rulesets_for(language)
+            local_rules_dir = os.path.join(os.path.dirname(__file__), "..", "semgrep-rules")
+            final_configs = []
+            for rs in rulesets:
+                local_yaml = os.path.join(local_rules_dir, rs.replace("/", "_") + ".yaml")
+                if os.path.exists(local_yaml):
+                    final_configs.append(local_yaml)
+                else:
+                    final_configs.append(rs)
+
             cmd = [
                 sys.executable,
                 "-c",
@@ -100,8 +126,8 @@ class handler(BaseHTTPRequestHandler):
                 "--quiet",
             ]
 
-            for ruleset in rulesets_for(language):
-                cmd.extend(["--config", ruleset])
+            for cfg in final_configs:
+                cmd.extend(["--config", cfg])
 
             cmd.append(src_file)
             env = {
@@ -153,6 +179,7 @@ class handler(BaseHTTPRequestHandler):
                     "scanTimeMs": scan_time_ms,
                     "exitCode": proc.returncode,
                     "stderr": proc.stderr[-4000:] if proc.returncode != 0 and not output.get("results") else "",
+                    "rulesets": rulesets,  # 返回实际使用的规则集，便于调试
                 },
             )
         except subprocess.TimeoutExpired:
