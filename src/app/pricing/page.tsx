@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
+import { AuthStatus } from "@/components/auth-status";
 
 function LangToggle() {
   const { lang, setLang, t } = useI18n();
@@ -113,12 +114,7 @@ export default function PricingPage() {
             {t("reviewTitle")}
           </Link>
           <LangToggle />
-          <Link
-            href="/auth/signin"
-            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-[#050505] transition hover:bg-white/90"
-          >
-            {t("signIn")}
-          </Link>
+          <AuthStatus signInLabel={t("signIn")} />
         </div>
       </header>
 

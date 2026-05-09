@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { checkUsageLimit, incrementUsage } from "@/lib/usage";
-import { analyzeCode as modalAnalyze } from "@/lib/analyzer";
 import { analyzeCode as ruleEngineAnalyze } from "@/lib/rules/rule-engine";
+import { runSemgrep } from "@/lib/semgrep";
 import { prisma } from "@/lib/prisma";
-
 export const runtime = "nodejs";
 
 interface FileInput {
@@ -12,7 +11,6 @@ interface FileInput {
   code: string;
   language: string;
 }
-
 export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id ?? null;
@@ -34,7 +32,7 @@ export async function POST(req: Request) {
   }
 
   const totalLines = files.reduce((sum, f) => sum + (f.code?.split("\n").length || 0), 0);
-  const MAX_LINES = 500;
+  const MAX_LINES = 3000;
   if (totalLines > MAX_LINES && !usage.isPro) {
     return NextResponse.json(
       {
@@ -53,33 +51,32 @@ export async function POST(req: Request) {
     const fileResults: { filename: string; score: number; issues: any[]; summary: string }[] = [];
 
     for (const file of files) {
-      // 2. Modal Scanner 远程扫描
-      const modalResult = await modalAnalyze(file.code, file.language || "auto");
-
-      // 3. 本地规则引擎扫描
+      // 2. 本地规则引擎扫描
       const ruleResult = ruleEngineAnalyze(file.code, file.language || "auto");
 
-      // 4. 合并结果
-      const mergedIssues = [
-        ...modalResult.issues,
-        ...ruleResult.issues.map((ri: any) => ({
-          type: mapRuleTypeToModal(ri.type),
-          severity: ri.severity,
-          file: file.filename || "input",
-          line: ri.line,
-          message: ri.title,
-          ruleId: ri.id,
-          endLine: ri.line,
-          fixSuggestion: ri.fix_suggestion,
-          fixCode: ri.fix_code,
-          referenceUrl: ri.reference_url,
-          codeSnippet: ri.code_snippet,
-        })),
-      ];
+      // 3. Semgrep 社区规则集扫描
+      const semgrepResult = await runSemgrep(file.code, file.language || "auto");
 
-      // 去重
+      // 4. 合并结果（rule-engine + Semgrep）
+      const ruleIssues = ruleResult.issues.map((ri: any) => ({
+        type: ri.type === "security" ? "security" : "quality",
+        severity: ri.severity,
+        file: file.filename || "input",
+        line: ri.line,
+        endLine: ri.line,
+        message: ri.title,
+        ruleId: ri.id,
+        fixSuggestion: ri.fix_suggestion,
+        fixCode: ri.fix_code,
+        referenceUrl: ri.reference_url,
+        codeSnippet: ri.code_snippet,
+      }));
+
+      const mergedIssues = [...ruleIssues, ...semgrepResult.issues];
+
+      // 去重（按行号+规则ID去重，rule-engine和Semgrep可能检出同一问题）
       const seen = new Set<string>();
-      const deduped = mergedIssues.filter((issue) => {
+      const deduped = mergedIssues.filter((issue: any) => {
         const key = `${issue.line}:${issue.ruleId}`;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -146,13 +143,4 @@ export async function POST(req: Request) {
     console.error("Analyze error:", e);
     return NextResponse.json({ error: "Analysis failed" }, { status: 500 });
   }
-}
-
-function mapRuleTypeToModal(
-  type: string
-): "security" | "quality" | "dependency" {
-  if (type === "security") return "security";
-  if (type === "hallucinated_api" || type === "api_version_mismatch")
-    return "quality";
-  return "quality";
 }

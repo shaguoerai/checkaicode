@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import type { Issue } from "@/lib/analyzer";
-import { signInWithGoogle, signInWithGitHub } from "@/app/auth/signin/actions";
+import { AuthStatus } from "@/components/auth-status";
 
 function LangToggle() {
   const { lang, setLang, t } = useI18n();
@@ -438,24 +438,7 @@ export default function ReviewPage() {
             {t("viewPricing")}
           </Link>
           <LangToggle />
-          <div className="flex items-center gap-2">
-            <form action={signInWithGoogle}>
-              <button
-                type="submit"
-                className="rounded-md border border-white/15 px-3 py-2 text-sm font-medium text-white/70 transition hover:border-neon/40 hover:text-neon"
-              >
-                Google
-              </button>
-            </form>
-            <form action={signInWithGitHub}>
-              <button
-                type="submit"
-                className="rounded-md border border-white/15 px-3 py-2 text-sm font-medium text-white/70 transition hover:border-neon/40 hover:text-neon"
-              >
-                GitHub
-              </button>
-            </form>
-          </div>
+          <AuthStatus signInLabel={t("signIn")} />
         </div>
       </header>
 
