@@ -27,6 +27,14 @@ interface SemgrepOutput {
   errors: any[];
 }
 
+interface SemgrepApiOutput {
+  results: SemgrepFinding[];
+  errors: any[];
+  scanTimeMs: number;
+  exitCode?: number;
+  stderr?: string;
+}
+
 const LANG_EXT: Record<string, string> = {
   python: ".py",
   javascript: ".js",
@@ -44,24 +52,6 @@ const LANG_EXT: Record<string, string> = {
   "c#": ".cs",
   csharp: ".cs",
 };
-
-// Semgrep 社区规则集 — 覆盖 OWASP + CWE + 各语言安全
-const SEMGREP_RULESETS = [
-  "p/default",
-  "p/owasp-top-ten",
-  "p/r2c-security-audit",
-  "p/command-injection",
-  "p/sql-injection",
-  "p/xss",
-  "p/ssrf",
-  "p/python",
-  "p/javascript",
-  "p/typescript",
-  "p/java",
-  "p/go",
-  "p/react",
-  "p/flask",
-];
 
 function mapSemgrepSeverity(s: string | undefined): "critical" | "warning" | "info" {
   if (!s) return "warning";
@@ -98,7 +88,101 @@ function mapCheckIdToType(checkId: string): "security" | "quality" | "dependency
   return "quality";
 }
 
+function parseSemgrepOutput(output: SemgrepApiOutput, tmpDir: string) {
+  const issues = output.results.map((r) => {
+    const severity = mapSemgrepSeverity(
+      r.extra?.severity || r.extra?.metadata?.severity
+    );
+    const type = mapCheckIdToType(r.check_id);
+    const fix = r.extra?.fix;
+
+    return {
+      type,
+      severity,
+      file: r.path.replace(tmpDir, "input"),
+      line: r.start.line,
+      endLine: r.end.line,
+      message: r.extra.message,
+      ruleId: r.check_id,
+      fixSuggestion: fix
+        ? `Suggested fix: ${fix.trim().slice(0, 200)}`
+        : undefined,
+      fixCode: fix || undefined,
+      codeSnippet: r.extra?.lines?.trim() || undefined,
+      referenceUrl: r.extra?.metadata?.cwe?.[0]
+        ? `https://cwe.mitre.org/data/definitions/${r.extra.metadata.cwe[0].replace("CWE-", "")}.html`
+        : undefined,
+    };
+  });
+
+  return {
+    issues,
+    scanTimeMs: output.scanTimeMs,
+    error: output.errors?.length
+      ? output.errors.map((e: any) => e.message || String(e)).join("; ")
+      : undefined,
+  };
+}
+
 export async function runSemgrep(code: string, language: string): Promise<{
+  issues: {
+    type: "security" | "quality" | "dependency";
+    severity: "critical" | "warning" | "info";
+    file: string;
+    line: number;
+    endLine: number;
+    message: string;
+    ruleId: string;
+    fixSuggestion?: string;
+    fixCode?: string;
+    codeSnippet?: string;
+    referenceUrl?: string;
+  }[];
+  scanTimeMs: number;
+  error?: string;
+}> {
+  // Fallback: if SEMgrep CLI is available locally, use it directly
+  try {
+    execSync("which semgrep", { encoding: "utf-8", stdio: "pipe" });
+    return runSemgrepLocal(code, language);
+  } catch {
+    // CLI not available, use HTTP API
+  }
+
+  const baseUrl =
+    process.env.SEMGREP_API_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+
+  if (process.env.SEMGREP_API_SECRET) {
+    headers["x-semgrep-api-secret"] = process.env.SEMGREP_API_SECRET;
+  }
+
+  const res = await fetch(`${baseUrl}/api/semgrep`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      code,
+      language,
+      filename: "input",
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "Unknown error");
+    return { issues: [], scanTimeMs: 0, error: `Semgrep API error ${res.status}: ${text}` };
+  }
+
+  const output: SemgrepApiOutput = await res.json();
+
+  // Use a dummy tmpDir for path replacement (Python Function already replaced tmp_dir with "input")
+  return parseSemgrepOutput(output, "input");
+}
+
+async function runSemgrepLocal(code: string, language: string): Promise<{
   issues: {
     type: "security" | "quality" | "dependency";
     severity: "critical" | "warning" | "info";
@@ -119,6 +203,23 @@ export async function runSemgrep(code: string, language: string): Promise<{
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "checkaicode-semgrep-"));
   const srcFile = path.join(tmpDir, `target${ext}`);
 
+  const SEMGREP_RULESETS = [
+    "p/default",
+    "p/owasp-top-ten",
+    "p/r2c-security-audit",
+    "p/command-injection",
+    "p/sql-injection",
+    "p/xss",
+    "p/ssrf",
+    "p/python",
+    "p/javascript",
+    "p/typescript",
+    "p/java",
+    "p/go",
+    "p/react",
+    "p/flask",
+  ];
+
   try {
     fs.writeFileSync(srcFile, code, "utf-8");
 
@@ -131,8 +232,8 @@ export async function runSemgrep(code: string, language: string): Promise<{
 
     const stdout = execSync(cmdParts.join(" "), {
       encoding: "utf-8",
-      timeout: 30000, // 30s timeout
-      maxBuffer: 10 * 1024 * 1024, // 10MB
+      timeout: 30000,
+      maxBuffer: 10 * 1024 * 1024,
     });
 
     const scanTimeMs = Date.now() - startTime;
@@ -166,7 +267,6 @@ export async function runSemgrep(code: string, language: string): Promise<{
 
     return { issues, scanTimeMs };
   } catch (err: any) {
-    // Semgrep returns exit code 1 when findings exist — that's normal
     if (err.status === 1 && err.stdout) {
       try {
         const output: SemgrepOutput = JSON.parse(err.stdout);
@@ -202,7 +302,6 @@ export async function runSemgrep(code: string, language: string): Promise<{
     }
     return { issues: [], scanTimeMs: 0, error: err.message };
   } finally {
-    // Cleanup temp files
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     } catch {
