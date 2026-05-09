@@ -1,4 +1,4 @@
-import { Issue } from "./review-types";
+import { Issue } from "../review-types";
 
 interface Rule {
   id: string;
@@ -58,6 +58,241 @@ const HALLUCINATED_METHODS: Record<string, { correct: string; pkg?: string }> = 
   "pandas.DataFrame.to_excel_sheet": { correct: "df.to_excel(..., sheet_name=...)", pkg: "pandas" },
   "numpy.array.sort_inplace": { correct: "arr.sort()", pkg: "numpy" },
 };
+
+// ── CodeSlick P0: Cross-language method confusion (40 rules) ──
+// Detects methods from one language used in another language's code.
+const CROSS_LANG_METHODS: {
+  wrong: string;
+  correct: string;
+  targetLang: string[];
+  sourceLang: string;
+  description: string;
+}[] = [
+  // Python code containing JS/Java methods (16 rules)
+  { wrong: ".toUpperCase()", correct: ".upper()", targetLang: ["python"], sourceLang: "JavaScript", description: "Python strings use .upper(), not .toUpperCase() (JavaScript method)." },
+  { wrong: ".toLowerCase()", correct: ".lower()", targetLang: ["python"], sourceLang: "JavaScript", description: "Python strings use .lower(), not .toLowerCase() (JavaScript method)." },
+  { wrong: ".trim()", correct: ".strip()", targetLang: ["python"], sourceLang: "JavaScript", description: "Python strings use .strip(), not .trim() (JavaScript method)." },
+  { wrong: ".push(", correct: ".append(...)", targetLang: ["python"], sourceLang: "JavaScript", description: "Python lists use .append(), not .push() (JavaScript method)." },
+  { wrong: ".shift()", correct: "list.pop(0) or collections.deque.popleft()", targetLang: ["python"], sourceLang: "JavaScript", description: "Python lists have no .shift() — use pop(0) or deque for efficient left-pop." },
+  { wrong: ".unshift(", correct: "list.insert(0, ...)", targetLang: ["python"], sourceLang: "JavaScript", description: "Python lists have no .unshift() — use list.insert(0, item)." },
+  { wrong: ".splice(", correct: "del list[i:j] or list[i:j] = [...]", targetLang: ["python"], sourceLang: "JavaScript", description: "Python lists have no .splice() — use slice assignment or del." },
+  { wrong: ".join(", correct: "str.join(iterable)", targetLang: ["python"], sourceLang: "JavaScript", description: "Python uses str.join(iterable), not array.join(sep)." },
+  { wrong: ".includes(", correct: "... in ...", targetLang: ["python"], sourceLang: "JavaScript", description: "Python uses 'in' operator for membership, not .includes() (JavaScript)." },
+  { wrong: ".startsWith(", correct: ".startswith()", targetLang: ["python"], sourceLang: "JavaScript", description: "Python strings use .startswith(), not .startsWith() (JavaScript method)." },
+  { wrong: ".endsWith(", correct: ".endswith()", targetLang: ["python"], sourceLang: "JavaScript", description: "Python strings use .endswith(), not .endsWith() (JavaScript method)." },
+  { wrong: ".substring(", correct: "str[start:end]", targetLang: ["python"], sourceLang: "JavaScript", description: "Python uses slice notation str[start:end], not .substring()." },
+  { wrong: ".substr(", correct: "str[start:end]", targetLang: ["python"], sourceLang: "JavaScript", description: "Python uses slice notation str[start:end], not .substr()." },
+  { wrong: ".charAt(", correct: "str[index]", targetLang: ["python"], sourceLang: "JavaScript", description: "Python strings support direct indexing with [], not .charAt()." },
+  { wrong: ".indexOf(", correct: ".index() or .find()", targetLang: ["python"], sourceLang: "JavaScript", description: "Python strings/lists use .index() or .find(), not .indexOf()." },
+
+  // JavaScript/TypeScript code containing Python methods (14 rules)
+  { wrong: ".upper()", correct: ".toUpperCase()", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript strings use .toUpperCase(), not .upper() (Python method)." },
+  { wrong: ".lower()", correct: ".toLowerCase()", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript strings use .toLowerCase(), not .lower() (Python method)." },
+  { wrong: ".strip()", correct: ".trim()", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript strings use .trim(), not .strip() (Python method)." },
+  { wrong: ".append(", correct: ".push(...)", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript arrays use .push(), not .append() (Python method)." },
+  { wrong: ".extend(", correct: ".push(...)", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript arrays use .push() or spread [...arr, ...items], not .extend()." },
+  { wrong: ".insert(", correct: ".splice(index, 0, item)", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript arrays use .splice(index, 0, item), not .insert()." },
+  { wrong: ".remove(", correct: "arr.splice(arr.indexOf(item), 1)", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript arrays have no .remove() — use splice or filter." },
+  { wrong: ".startswith()", correct: ".startsWith()", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript strings use .startsWith(), not .startswith() (Python method)." },
+  { wrong: ".endswith()", correct: ".endsWith()", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript strings use .endsWith(), not .endswith() (Python method)." },
+  { wrong: ".find()", correct: ".indexOf() or .find()", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript arrays use .indexOf() or .find(), strings use .indexOf()." },
+  { wrong: ".splitlines()", correct: ".split('\\n')", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript strings use .split('\\n'), not .splitlines() (Python method)." },
+  { wrong: ".isdigit()", correct: "/^\\d+$/.test(str)", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript has no .isdigit() — use regex /^\\d+$/.test(str)." },
+  { wrong: ".isalpha()", correct: "/^[a-zA-Z]+$/.test(str)", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript has no .isalpha() — use regex /^[a-zA-Z]+$/.test(str)." },
+  { wrong: ".isalnum()", correct: "/^[a-zA-Z0-9]+$/.test(str)", targetLang: ["javascript", "typescript"], sourceLang: "Python", description: "JavaScript has no .isalnum() — use regex /^[a-zA-Z0-9]+$/.test(str)." },
+
+  // Java code containing JavaScript/Python methods (6 rules)
+  { wrong: ".push(", correct: ".add() or .addAll()", targetLang: ["java"], sourceLang: "JavaScript/Python", description: "Java collections use .add() or .addAll(), not .push() (JS/Python method)." },
+  { wrong: ".includes(", correct: ".contains()", targetLang: ["java"], sourceLang: "JavaScript", description: "Java collections/strings use .contains(), not .includes() (JavaScript method)." },
+  { wrong: ".indexOf(", correct: ".indexOf() (Java also has this)", targetLang: ["java"], sourceLang: "JavaScript", description: "Java String/List also has .indexOf() — verify semantics match." },
+  { wrong: ".length()", correct: ".length (field) or .size()", targetLang: ["java"], sourceLang: "JavaScript", description: "Java arrays use .length field, collections use .size() — not .length() method." },
+  { wrong: ".toUpperCase()", correct: ".toUpperCase() (Java also has this)", targetLang: ["java"], sourceLang: "JavaScript", description: "Java String has .toUpperCase() — this may be valid, verify context." },
+  { wrong: ".trim()", correct: ".trim() (Java also has this)", targetLang: ["java"], sourceLang: "JavaScript", description: "Java String has .trim() since Java 11 — verify your Java version." },
+
+  // Python code containing Java methods (4 rules)
+  { wrong: ".add(", correct: ".add() (Python set also has this)", targetLang: ["python"], sourceLang: "Java", description: "Python sets use .add(), lists use .append() — verify collection type." },
+  { wrong: ".contains(", correct: "... in ...", targetLang: ["python"], sourceLang: "Java", description: "Python uses 'in' operator for membership, not .contains() (Java method)." },
+  { wrong: ".size()", correct: "len(...)", targetLang: ["python"], sourceLang: "Java", description: "Python uses len() for length, not .size() (Java method)." },
+  { wrong: ".getClass()", correct: "type(...)", targetLang: ["python"], sourceLang: "Java", description: "Python uses type() or isinstance(), not .getClass() (Java method)." },
+];
+
+// ── CodeSlick P0: Framework deprecated APIs (15 rules) ──
+const DEPRECATED_APIS: {
+  pattern: RegExp;
+  id: string;
+  frameworks: string[];
+  title: string;
+  description: string;
+  fix_suggestion: string;
+  fix_code?: string;
+  reference_url?: string;
+  severity: "critical" | "warning" | "info";
+}[] = [
+  // React (5 rules)
+  {
+    pattern: /componentWillMount\s*\(/,
+    id: "DEPRECATED-REACT-001",
+    frameworks: ["react"],
+    title: "React: componentWillMount 已移除",
+    description: "componentWillMount 在 React 17+ 中已移除。请使用 componentDidMount 或在构造函数中初始化。",
+    fix_suggestion: "Use componentDidMount for side effects, or initialize state in constructor/useState.",
+    fix_code: "useEffect(() => { /* side effect */ }, []);",
+    reference_url: "https://react.dev/reference/react/Component#componentwillmount",
+    severity: "critical",
+  },
+  {
+    pattern: /componentWillUpdate\s*\(/,
+    id: "DEPRECATED-REACT-002",
+    frameworks: ["react"],
+    title: "React: componentWillUpdate 已移除",
+    description: "componentWillUpdate 在 React 17+ 中已移除。请使用 componentDidUpdate 或 getSnapshotBeforeUpdate。",
+    fix_suggestion: "Use componentDidUpdate for post-update logic, or getSnapshotBeforeUpdate for DOM reads.",
+    reference_url: "https://react.dev/reference/react/Component#componentwillupdate",
+    severity: "critical",
+  },
+  {
+    pattern: /componentWillReceiveProps\s*\(/,
+    id: "DEPRECATED-REACT-003",
+    frameworks: ["react"],
+    title: "React: componentWillReceiveProps 已移除",
+    description: "componentWillReceiveProps 在 React 17+ 中已移除。请使用 getDerivedStateFromProps 或 useEffect。",
+    fix_suggestion: "Use getDerivedStateFromProps (static) or useEffect with prop dependencies.",
+    reference_url: "https://react.dev/reference/react/Component#componentwillreceiveprops",
+    severity: "critical",
+  },
+  {
+    pattern: /React\.createClass\s*\(/,
+    id: "DEPRECATED-REACT-004",
+    frameworks: ["react"],
+    title: "React: createClass 已废弃",
+    description: "React.createClass 在 React 16 中已移除。请使用 ES6 class 或函数组件。",
+    fix_suggestion: "Convert to a function component with hooks, or an ES6 class extending React.Component.",
+    fix_code: "function MyComponent() { const [state, setState] = useState(...); return ... }",
+    reference_url: "https://react.dev/reference/react/Component",
+    severity: "warning",
+  },
+  {
+    pattern: /React\.PropTypes\./,
+    id: "DEPRECATED-REACT-005",
+    frameworks: ["react"],
+    title: "React: PropTypes 已移出核心",
+    description: "React.PropTypes 在 React 16 中已移除。请使用 prop-types 包。",
+    fix_suggestion: "Install prop-types: npm install prop-types, then import PropTypes from 'prop-types'.",
+    reference_url: "https://react.dev/reference/react/Component#static-proptypes",
+    severity: "warning",
+  },
+
+  // Vue (2 rules)
+  {
+    pattern: /Vue\.extend\s*\(/,
+    id: "DEPRECATED-VUE-001",
+    frameworks: ["vue"],
+    title: "Vue 2: Vue.extend 在 Vue 3 中变化",
+    description: "Vue.extend 在 Vue 3 中不再推荐使用。请使用 defineComponent 或 <script setup>。",
+    fix_suggestion: "In Vue 3, use defineComponent({ ... }) or <script setup> for Composition API.",
+    fix_code: "import { defineComponent } from 'vue';\nexport default defineComponent({ ... })",
+    reference_url: "https://vuejs.org/api/general.html#definecomponent",
+    severity: "warning",
+  },
+  {
+    pattern: /this\.\$set\s*\(/,
+    id: "DEPRECATED-VUE-002",
+    frameworks: ["vue"],
+    title: "Vue 2: $set 在 Vue 3 中不再需要",
+    description: "Vue 3 使用 Proxy 实现响应式，this.$set 不再需要。直接赋值即可。",
+    fix_suggestion: "In Vue 3, simply assign: obj.key = value — reactivity is handled by Proxy.",
+    reference_url: "https://vuejs.org/guide/extras/reactivity-in-depth.html",
+    severity: "info",
+  },
+
+  // Django (3 rules)
+  {
+    pattern: /django\.conf\.urls\.url\s*\(/,
+    id: "DEPRECATED-DJANGO-001",
+    frameworks: ["django"],
+    title: "Django: django.conf.urls.url 已废弃",
+    description: "django.conf.urls.url() 在 Django 4.0 中已移除。请使用 django.urls.re_path 或 path。",
+    fix_suggestion: "Use django.urls.path() or re_path() instead of url().",
+    fix_code: "from django.urls import path\npath('route/', view)",
+    reference_url: "https://docs.djangoproject.com/en/4.0/releases/4.0/#features-removed-in-4-0",
+    severity: "critical",
+  },
+  {
+    pattern: /from django\.conf\.urls import url/,
+    id: "DEPRECATED-DJANGO-002",
+    frameworks: ["django"],
+    title: "Django: 导入 url() 已废弃",
+    description: "from django.conf.urls import url 在 Django 4.0 中已移除。",
+    fix_suggestion: "Use from django.urls import path, re_path instead.",
+    reference_url: "https://docs.djangoproject.com/en/4.0/releases/4.0/",
+    severity: "critical",
+  },
+  {
+    pattern: /force_text\s*\(/,
+    id: "DEPRECATED-DJANGO-003",
+    frameworks: ["django"],
+    title: "Django: force_text 已移除",
+    description: "django.utils.encoding.force_text 在 Django 4.0 中已移除。请使用 force_str。",
+    fix_suggestion: "Replace force_text() with force_str().",
+    reference_url: "https://docs.djangoproject.com/en/4.0/releases/4.0/",
+    severity: "warning",
+  },
+
+  // Flask (1 rule)
+  {
+    pattern: /flask\.ext\./,
+    id: "DEPRECATED-FLASK-001",
+    frameworks: ["flask"],
+    title: "Flask: flask.ext 已废弃",
+    description: "flask.ext 导入方式在 Flask 0.11+ 中已废弃。请直接导入扩展包。",
+    fix_suggestion: "Import extensions directly: from flask_sqlalchemy import SQLAlchemy",
+    reference_url: "https://flask.palletsprojects.com/en/latest/changes/#version-0-11",
+    severity: "warning",
+  },
+
+  // Spring (4 rules)
+  {
+    pattern: /@RequestMapping\s*\(/,
+    id: "DEPRECATED-SPRING-001",
+    frameworks: ["spring"],
+    title: "Spring: @RequestMapping 可用更具体注解替代",
+    description: "@RequestMapping 仍然有效，但 Spring 推荐使用 @GetMapping/@PostMapping 等更具体的注解。",
+    fix_suggestion: "Use @GetMapping, @PostMapping, @PutMapping, @DeleteMapping for clarity.",
+    reference_url: "https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html",
+    severity: "info",
+  },
+  {
+    pattern: /JdbcTemplate\.queryForObject\s*\([^)]*String\.class\s*\)/,
+    id: "DEPRECATED-SPRING-002",
+    frameworks: ["spring"],
+    title: "Spring: JdbcTemplate.queryForObject(String.class) 已废弃",
+    description: "queryForObject(sql, String.class) 在 Spring 5.3+ 中已废弃。请使用 queryForObject(sql, String.class, args...).",
+    fix_suggestion: "Pass parameters explicitly: jdbc.queryForObject(sql, String.class, arg1, arg2)",
+    reference_url: "https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html",
+    severity: "warning",
+  },
+  {
+    pattern: /WebSecurityConfigurerAdapter/,
+    id: "DEPRECATED-SPRING-003",
+    frameworks: ["spring"],
+    title: "Spring Security: WebSecurityConfigurerAdapter 已废弃",
+    description: "WebSecurityConfigurerAdapter 在 Spring Security 5.7+ / Spring Boot 2.7+ 中已废弃。请使用 SecurityFilterChain bean。",
+    fix_suggestion: "Define a SecurityFilterChain bean instead of extending WebSecurityConfigurerAdapter.",
+    fix_code: "@Bean\npublic SecurityFilterChain filterChain(HttpSecurity http) throws Exception { ... }",
+    reference_url: "https://spring.io/blog/2022/02/21/spring-security-5-7-migration-guide",
+    severity: "critical",
+  },
+  {
+    pattern: /@Autowired/,
+    id: "DEPRECATED-SPRING-004",
+    frameworks: ["spring"],
+    title: "Spring: 字段注入 @Autowired 不推荐",
+    description: "字段注入 @Autowired 在 Spring 中仍有效，但官方推荐构造函数注入。",
+    fix_suggestion: "Use constructor injection: private final MyService service; public MyClass(MyService s) { this.service = s; }",
+    reference_url: "https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-constructor-injection",
+    severity: "info",
+  },
+];
 
 const VERSION_MISMATCHES = [
   {
@@ -397,7 +632,7 @@ const SECURITY_PATTERNS = [
     id: "SEC-XSS-002",
     title: "Dangerous document.write()",
     description: "document.write() is dangerous in async contexts and can lead to XSS. Use DOM manipulation methods instead.",
-    fix_suggestion: "Build DOM nodes instead: document.createElement() + appendChild() — safer and more predictable.",
+    fix_suggestion: "Build DOM nodes instead: document.createElement() + appendChild() — safer and more predictable",
     severity: "critical" as const,
   },
   {
@@ -750,6 +985,64 @@ function detectSemanticIssues(code: string, lines: string[]): Issue[] {
   return issues;
 }
 
+// ── CodeSlick P0: Cross-language method confusion detector ──
+function detectCrossLangMethods(code: string, lines: string[], language: string): Issue[] {
+  const issues: Issue[] = [];
+  const normalizedLang = language.toLowerCase();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    for (const rule of CROSS_LANG_METHODS) {
+      if (!rule.targetLang.includes(normalizedLang)) continue;
+      if (line.includes(rule.wrong)) {
+        issues.push(
+          makeIssue(
+            {
+              id: `CROSSLANG-${rule.wrong.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()}`,
+              type: "hallucinated_api",
+              severity: "critical",
+              title: `${rule.sourceLang} method '${rule.wrong}' in ${normalizedLang} code`,
+              description: rule.description,
+              fix_suggestion: `Use ${rule.correct} instead of ${rule.wrong}`,
+            },
+            i + 1,
+            line.trim()
+          )
+        );
+      }
+    }
+  }
+  return issues;
+}
+
+// ── CodeSlick P0: Framework deprecated API detector ──
+function detectDeprecatedApis(code: string, lines: string[], language: string): Issue[] {
+  const issues: Issue[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    for (const rule of DEPRECATED_APIS) {
+      if (rule.pattern.test(line)) {
+        issues.push(
+          makeIssue(
+            {
+              id: rule.id,
+              type: "api_version_mismatch",
+              severity: rule.severity,
+              title: rule.title,
+              description: rule.description,
+              fix_suggestion: rule.fix_suggestion,
+              fix_code: rule.fix_code,
+              reference_url: rule.reference_url,
+            },
+            i + 1,
+            line.trim()
+          )
+        );
+      }
+    }
+  }
+  return issues;
+}
+
 export function analyzeCode(code: string, language: string): { score: number; issues: Issue[]; summary: string } {
   const lines = code.split("\n");
   const allIssues: Issue[] = [];
@@ -759,6 +1052,8 @@ export function analyzeCode(code: string, language: string): { score: number; is
   allIssues.push(...detectVersionMismatches(code, lines));
   allIssues.push(...detectSecurityIssues(code, lines));
   allIssues.push(...detectSemanticIssues(code, lines));
+  allIssues.push(...detectCrossLangMethods(code, lines, language));
+  allIssues.push(...detectDeprecatedApis(code, lines, language));
 
   // Deduplicate by (line, title)
   const seen = new Set<string>();
