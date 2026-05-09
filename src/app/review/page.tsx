@@ -563,7 +563,7 @@ export default function ReviewPage() {
                 <ScoreRing score={score} />
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold text-white">
-                    {t("resultTitle")}
+                    {issues.length === 0 ? t("resultNoIssues") : t("resultTitle")}
                   </h2>
                   {summary && (
                     <p className="mt-0.5 text-xs text-white/40">{summary}</p>
@@ -631,7 +631,15 @@ export default function ReviewPage() {
 
               {/* Issues list */}
               <div className="flex-1 overflow-auto space-y-2 max-h-[480px]">
-                {filteredIssues.length === 0 ? (
+                {issues.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-white/20">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <p className="mt-3 text-sm">{t("resultNoIssues")}</p>
+                  </div>
+                ) : filteredIssues.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-white/20">
                     <FilterIcon />
                     <p className="mt-3 text-sm">No issues match the selected filters.</p>
