@@ -47,6 +47,10 @@ model User {
   stripeSubscriptionId   String? @map("stripe_subscription_id")
   stripePriceId          String? @map("stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
+  gumroadLicenseKey      String? @map("gumroad_license_key")
+  gumroadProductId       String? @map("gumroad_product_id")
+  gumroadSubscriptionId  String? @map("gumroad_subscription_id")
+  gumroadCurrentPeriodEnd DateTime? @map("gumroad_current_period_end")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 

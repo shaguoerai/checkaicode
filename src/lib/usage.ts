@@ -14,6 +14,14 @@ function getClientIP(req: Request): string {
   return "unknown";
 }
 
+function isProUser(user: any): boolean {
+  if (!user || user.role !== "pro") return false;
+  const now = new Date();
+  const stripeActive = user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
+  const gumroadActive = user.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now;
+  return stripeActive || gumroadActive;
+}
+
 export async function checkUsageLimit(
   userId: string | null | undefined,
   req?: Request
@@ -40,13 +48,11 @@ export async function checkUsageLimit(
     select: {
       role: true,
       stripeCurrentPeriodEnd: true,
+      gumroadCurrentPeriodEnd: true,
     },
   });
 
-  const isPro =
-    user?.role === "pro" &&
-    user?.stripeCurrentPeriodEnd &&
-    user.stripeCurrentPeriodEnd > new Date();
+  const isPro = isProUser(user);
 
   if (isPro) {
     return { allowed: true, remaining: -1, isPro: true };

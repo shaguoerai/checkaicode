@@ -179,7 +179,8 @@ export default function PricingPage() {
                 <button
                   onClick={async () => {
                     try {
-                      const res = await fetch("/api/stripe/checkout");
+                      const billing = isYearly ? "yearly" : "monthly";
+                      const res = await fetch(`/api/stripe/checkout?billing=${billing}`);
                       const data = await res.json();
                       if (data.url) {
                         window.location.href = data.url;
@@ -190,6 +191,33 @@ export default function PricingPage() {
                       }
                     } catch {
                       alert("Checkout unavailable. Please try again later.");
+                    }
+                  }}
+                  className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
+                    plan.highlighted
+                      ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
+                      : "border border-white/15 text-white hover:border-white/30 hover:bg-white/5"
+                  }`}
+                >
+                  {plan.cta}
+                </button>
+              ) : plan.ctaHref === "gumroad" ? (
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/gumroad/verify", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ licenseKey: prompt("Enter your Gumroad license key:") }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        window.location.reload();
+                      } else {
+                        alert(data.error || "Invalid license key.");
+                      }
+                    } catch {
+                      alert("Verification failed. Please try again later.");
                     }
                   }}
                   className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${

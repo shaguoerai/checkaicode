@@ -265,6 +265,9 @@ export default function ReviewPage() {
   /* Filters */
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [scanMode, setScanMode] = useState<"standard" | "deep">("standard");
+  const [privacyMode, setPrivacyMode] = useState(false);
+  const [isPro, setIsPro] = useState(false);
 
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
@@ -359,7 +362,11 @@ export default function ReviewPage() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ files: filesToSend }),
+        body: JSON.stringify({
+          files: filesToSend,
+          scanMode,
+          privacyMode,
+        }),
       });
       const data = await res.json();
       if (data.issues) {
@@ -367,6 +374,7 @@ export default function ReviewPage() {
         setFileResults(data.fileResults || null);
         setSummary(data.summary || "");
         setScore(data.score ?? 100);
+        setIsPro(data.isPro ?? false);
       } else if (data.error && data.lines) {
         setError(
           lang === "zh"
@@ -539,6 +547,51 @@ export default function ReviewPage() {
               className="min-h-[320px] flex-1 resize-none rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
               spellCheck={false}
             />
+            {/* Pro controls: scan mode + privacy toggle */}
+            {isPro && (
+              <div className="mt-3 flex items-center gap-4">
+                {/* Scan mode segmented control */}
+                <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.02] p-0.5">
+                  <button
+                    onClick={() => setScanMode("standard")}
+                    className={`rounded-md px-3 py-1 text-xs font-medium transition ${
+                      scanMode === "standard"
+                        ? "bg-neon/15 text-neon"
+                        : "text-white/40 hover:text-white/60"
+                    }`}
+                  >
+                    Standard Fast Scan
+                  </button>
+                  <button
+                    onClick={() => setScanMode("deep")}
+                    className={`rounded-md px-3 py-1 text-xs font-medium transition ${
+                      scanMode === "deep"
+                        ? "bg-neon/15 text-neon"
+                        : "text-white/40 hover:text-white/60"
+                    }`}
+                  >
+                    Deep Thorough Scan
+                  </button>
+                </div>
+                {scanMode === "deep" && (
+                  <span className="text-[10px] text-amber-400/70">
+                    Uses 5× quota
+                  </span>
+                )}
+                {/* Privacy mode toggle */}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={privacyMode}
+                    onChange={(e) => setPrivacyMode(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-white/20 bg-white/5 text-neon focus:ring-neon/30"
+                  />
+                  <span className="text-xs text-white/50">
+                    Privacy Mode: Code stays local
+                  </span>
+                </label>
+              </div>
+            )}
             <button
               onClick={analyze}
               disabled={loading || !tabs.some(t => t.code.trim())}
