@@ -50,8 +50,10 @@ export default function PricingPage() {
       desc: t("freeDesc"),
       features: [
         { text: t("freeReviews"), included: true },
+        { text: t("freeProDay"), included: true },
         { text: t("freeBasic"), included: true },
         { text: t("freeCommunity"), included: true },
+        { text: t("freeSupport"), included: true },
         { text: t("featHallucination"), included: false },
         { text: t("featSecurity"), included: false },
         { text: t("proPriority"), included: false },
@@ -64,32 +66,34 @@ export default function PricingPage() {
       name: t("proPlan"),
       price: isYearly ? t("proPriceYearly") : t("proPrice"),
       desc: t("proDesc"),
+      futurePrice: t("futurePrice"),
+      badge: t("launchSpecialBadge"),
       features: [
         { text: t("proUnlimited"), included: true },
         { text: t("proAdvanced"), included: true },
+        { text: t("proCustomRules"), included: true },
         { text: t("proPriority"), included: true },
-        { text: "Multi-file scan", included: true },
-        { text: "Fix suggestions", included: true },
-        { text: "API access", included: true },
+        { text: t("proTeamDash"), included: true },
+        { text: t("proApi"), included: true },
       ],
-      cta: t("upgradeToPro"),
+      cta: isYearly ? t("lockInYearly") : t("upgradeToPro"),
       ctaHref: "#",
       highlighted: true,
       billingToggle: true,
     },
     {
-      name: t("teamPlan") || "Team",
-      price: t("teamPrice") || "$29 / month",
-      desc: t("teamDesc") || "For organizations with custom needs.",
+      name: t("teamPlan"),
+      price: t("teamPrice"),
+      desc: t("teamDesc"),
       features: [
-        { text: t("proUnlimited"), included: true },
-        { text: "SSO / SAML", included: true },
-        { text: "Audit logs", included: true },
-        { text: "Custom rules", included: true },
-        { text: "Dedicated support", included: true },
-        { text: "SLA guarantee", included: true },
+        { text: t("teamEverythingPro"), included: true },
+        { text: t("teamUnlimitedMembers"), included: true },
+        { text: t("teamSso"), included: true },
+        { text: t("teamAnalytics"), included: true },
+        { text: t("teamManager"), included: true },
+        { text: t("teamSla"), included: true },
       ],
-      cta: t("contactSales") || "Contact Sales",
+      cta: t("contactSales"),
       ctaHref: "#",
       highlighted: false,
     },
@@ -143,7 +147,7 @@ export default function PricingPage() {
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${isYearly ? "bg-neon/20 text-neon" : "text-white/40 hover:text-white/60"}`}
           >
             Yearly
-            <span className="ml-1.5 rounded bg-neon/10 px-1.5 py-0.5 text-[10px] text-neon">Save 27%</span>
+            <span className="ml-1.5 rounded bg-neon/10 px-1.5 py-0.5 text-[10px] text-neon">{t("yearlySave")}</span>
           </button>
         </div>
 
@@ -157,16 +161,19 @@ export default function PricingPage() {
                   : "border border-white/8 bg-white/[0.02]"
               }`}
             >
-              {plan.highlighted && (
+              {plan.highlighted && plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="rounded-full bg-neon px-3 py-1 text-xs font-semibold text-[#050505]">
-                    Most Popular
+                    {plan.badge}
                   </span>
                 </div>
               )}
 
               <h2 className="text-xl font-semibold text-white">{plan.name}</h2>
               <p className="mt-2 text-3xl font-bold text-white">{plan.price}</p>
+              {'futurePrice' in plan && plan.futurePrice && (
+                <p className="mt-1 text-xs text-white/30">{plan.futurePrice}</p>
+              )}
               <p className="mt-1 text-sm text-white/40">{plan.desc}</p>
 
               <div className="mt-6 flex-1">
@@ -240,12 +247,41 @@ export default function PricingPage() {
                   {plan.cta}
                 </Link>
               )}
+
+              {/* Secondary CTA for Pro yearly */}
+              {plan.highlighted && !isYearly && (
+                <p className="mt-3 text-center text-xs text-white/30">
+                  Or{" "}
+                  <button
+                    onClick={() => setIsYearly(true)}
+                    className="text-neon hover:underline"
+                  >
+                    $79/year
+                  </button>{" "}
+                  — {t("yearlySave")}
+                </p>
+              )}
             </div>
           ))}
         </div>
 
+        {/* Pro Experience Day note */}
+        <div className="mt-10 max-w-2xl rounded-xl border border-white/8 bg-white/[0.02] px-6 py-4">
+          <p className="text-sm text-white/50">
+            <span className="text-neon">💡</span>{" "}
+            <strong className="text-white/70">{t("proExperienceDayTitle")}</strong>{" "}
+            {t("proExperienceDay")}
+          </p>
+        </div>
+
+        {/* Refund guarantee */}
+        <div className="mt-6 max-w-2xl text-center">
+          <p className="text-sm font-medium text-white/60">{t("refundGuarantee")}</p>
+          <p className="mt-1 text-xs text-white/30">{t("refundDesc")}</p>
+        </div>
+
         {/* Trust badges */}
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/20">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-white/20">
           <div className="flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
