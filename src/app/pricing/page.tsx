@@ -140,13 +140,13 @@ export default function PricingPage() {
             onClick={() => setIsYearly(false)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${!isYearly ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"}`}
           >
-            Monthly
+            {t("monthly")}
           </button>
           <button
             onClick={() => setIsYearly(true)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${isYearly ? "bg-neon/20 text-neon" : "text-white/40 hover:text-white/60"}`}
           >
-            Yearly
+            {t("yearly")}
             <span className="ml-1.5 rounded bg-neon/10 px-1.5 py-0.5 text-[10px] text-neon">{t("yearlySave")}</span>
           </button>
         </div>
@@ -170,7 +170,16 @@ export default function PricingPage() {
               )}
 
               <h2 className="text-xl font-semibold text-white">{plan.name}</h2>
-              <p className="mt-2 text-3xl font-bold text-white">{plan.price}</p>
+              <p className="mt-2 text-3xl font-bold text-white">
+                {plan.price.includes(' / ') ? (
+                  <>
+                    {plan.price.split(' / ')[0]}
+                    <span className="text-lg font-normal text-white/40">{' / ' + plan.price.split(' / ')[1]}</span>
+                  </>
+                ) : (
+                  plan.price
+                )}
+              </p>
               {'futurePrice' in plan && plan.futurePrice && (
                 <p className="mt-1 text-xs text-white/30">{plan.futurePrice}</p>
               )}

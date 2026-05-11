@@ -100,3 +100,16 @@ model Usage {
   @@unique([userId, date])
   @@map("usage")
 }
+
+model PaywallEvent {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  ip        String
+  eventType String   @map("event_type") // hit | upgrade | leave | return_next_day
+  metadata  Json?    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([eventType, createdAt])
+  @@index([userId, createdAt])
+  @@map("paywall_events")
+}

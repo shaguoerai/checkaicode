@@ -82,10 +82,18 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white">4. Refunds</h2>
+              <h2 className="text-xl font-semibold text-white">4. Refund Policy</h2>
               <p className="mt-3 leading-relaxed">
-                Pro subscriptions come with a 14-day money-back guarantee. No questions asked. Contact us via email to request a refund.
+                All new Pro subscriptions (monthly and annual) are eligible for a full refund within 7 days of the initial purchase.
               </p>
+              <ul className="mt-3 list-disc space-y-2 pl-5">
+                <li>You receive a full refund of the amount you actually paid.</li>
+                <li>Monthly ($9) → refund $9. Annual ($79) → refund $79.</li>
+                <li>Subscriptions are non-refundable after 7 days but can be canceled at any time to stop future charges / auto-renewal.</li>
+                <li>The Launch Special pricing is forfeited upon cancellation. Re-subscribing later will be at the then-current price.</li>
+                <li>Refunds are processed within 5–7 business days to the original payment method.</li>
+                <li>Refunds do not apply to Team or Enterprise plans. Contact sales for custom terms.</li>
+              </ul>
             </section>
 
             <section>
@@ -131,6 +139,7 @@ export default function TermsPage() {
           <div className="flex items-center gap-4 text-sm text-white/40">
             <Link href="/privacy" className="transition hover:text-white">Privacy</Link>
             <Link href="/terms" className="transition hover:text-white">Terms</Link>
+            <Link href="/pricing" className="transition hover:text-white">Refund Policy</Link>
           </div>
         </div>
       </footer>

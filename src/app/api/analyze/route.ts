@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { checkUsageLimit, incrementUsage } from "@/lib/usage";
+import { trackPaywallEvent } from "@/lib/paywall-tracking";
 import { analyzeCode as ruleEngineAnalyze } from "@/lib/rules/rule-engine";
 import { runSemgrep } from "@/lib/semgrep";
 import { runLLMAnalysis, LLMScanMode } from "@/lib/llm-analysis";
@@ -17,19 +18,45 @@ export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
-  // 1. 额度检查（已登录按用户，未登录按 IP）
-  const usage = await checkUsageLimit(userId, req);
-  if (!usage.allowed) {
-    return NextResponse.json(
-      { error: "Daily limit reached. Upgrade to Pro for unlimited reviews." },
-      { status: 429 }
-    );
-  }
+    // 1. 额度检查（已登录按用户，未登录按 IP）
+    const usage = await checkUsageLimit(userId, req);
+    if (!usage.allowed) {
+      // 触墙埋点：记录免费用户额度用完
+      const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                       req.headers.get("x-real-ip")?.trim() ||
+                       "unknown";
+      await trackPaywallEvent({
+        userId,
+        ip: clientIP,
+        eventType: "hit",
+        metadata: { remaining: usage.remaining, isPro: usage.isPro },
+      });
+
+      return NextResponse.json(
+        { error: "Daily limit reached. Upgrade to Pro for unlimited reviews." },
+        { status: 429 }
+      );
+    }
 
   const body = await req.json();
   const files: FileInput[] = body.files ?? [{ filename: body.filename || "input", code: body.code, language: body.language || "auto" }];
   const scanMode: LLMScanMode = body.scanMode === "deep" ? "deep" : "standard";
   const privacyMode: boolean = body.privacyMode === true;
+  const paywallEvent: string | undefined = body.paywallEvent; // 'upgrade' | 'leave' | 'return_next_day'
+
+  // 前端上报的触墙后续事件（upgrade/leave/return_next_day）
+  if (paywallEvent && ["upgrade", "leave", "return_next_day"].includes(paywallEvent)) {
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                     req.headers.get("x-real-ip")?.trim() ||
+                     "unknown";
+    await trackPaywallEvent({
+      userId,
+      ip: clientIP,
+      eventType: paywallEvent as any,
+      metadata: { source: "client_report" },
+    });
+    return NextResponse.json({ ok: true });
+  }
 
   if (!files.length || !files.some(f => f.code?.trim())) {
     return NextResponse.json({ error: "Code required" }, { status: 400 });
