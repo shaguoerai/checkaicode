@@ -69,7 +69,7 @@ const dict: Record<Lang, Record<string, string>> = {
     monthly: "Monthly",
     yearly: "Yearly",
     // Pricing badges & extras
-    launchSpecialBadge: "Launch Special — Available until June 30",
+    launchSpecialBadge: "Launch Special",
     futurePrice: "Future price: $19/month",
     yearlySave: "save 27%",
     proExperienceDayTitle: "Pro Experience Day:",
@@ -174,7 +174,7 @@ const dict: Record<Lang, Record<string, string>> = {
     monthly: "月付",
     yearly: "年付",
     // Pricing badges & extras
-    launchSpecialBadge: "Launch Special — 优惠至 6 月 30 日",
+    launchSpecialBadge: "Launch Special",
     futurePrice: "未来价格: $19/月",
     yearlySave: "省 27%",
     proExperienceDayTitle: "Pro 体验日：",
