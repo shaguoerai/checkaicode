@@ -113,7 +113,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-white">7. Governing law</h2>
               <p className="mt-3 leading-relaxed">
-                These terms are governed by the laws of the People's Republic of China. Any disputes shall be resolved in the courts of Beijing, China.
+                These terms are governed by the laws of the State of Delaware, USA. Any disputes shall be resolved through binding arbitration in accordance with the American Arbitration Association's rules.
               </p>
             </section>
 
