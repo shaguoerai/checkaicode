@@ -23,7 +23,6 @@ export async function GET() {
   });
 
   const isPro = user?.role === "pro" && (
-    (user?.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > new Date()) ||
     (user?.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > new Date())
   );
 

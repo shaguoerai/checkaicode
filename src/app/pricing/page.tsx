@@ -193,21 +193,11 @@ export default function PricingPage() {
 
               {plan.ctaHref === "#" ? (
                 <button
-                  onClick={async () => {
-                    try {
-                      const billing = isYearly ? "yearly" : "monthly";
-                      const res = await fetch(`/api/stripe/checkout?billing=${billing}`);
-                      const data = await res.json();
-                      if (data.url) {
-                        window.location.href = data.url;
-                      } else if (data.error === "Unauthorized") {
-                        window.location.href = "/auth/signin";
-                      } else {
-                        alert("Checkout unavailable. Please try again later.");
-                      }
-                    } catch {
-                      alert("Checkout unavailable. Please try again later.");
-                    }
+                  onClick={() => {
+                    const url = isYearly
+                      ? process.env.NEXT_PUBLIC_GUMROAD_YEARLY_URL || "[GUMROAD_YEARLY_URL]"
+                      : process.env.NEXT_PUBLIC_GUMROAD_MONTHLY_URL || "[GUMROAD_MONTHLY_URL]";
+                    window.open(url, "_blank");
                   }}
                   className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
                     plan.highlighted
