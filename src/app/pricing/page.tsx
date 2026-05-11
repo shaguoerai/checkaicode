@@ -5,6 +5,66 @@ import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { AuthStatus } from "@/components/auth-status";
 
+function GumroadRedirectModal({
+  open,
+  onClose,
+  onContinue,
+  isYearly,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onContinue: () => void;
+  isYearly: boolean;
+}) {
+  const { t } = useI18n();
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-8 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-semibold text-white">
+          {t("gumroadModalTitle")}
+        </h2>
+
+        <p className="mt-4 text-sm text-white/60 leading-relaxed">
+          {t("gumroadModalBody")}
+        </p>
+
+        <ol className="mt-3 ml-4 list-decimal text-sm text-white/60 space-y-1">
+          <li>{t("gumroadStep1")}</li>
+          <li>{t("gumroadStep2")}</li>
+          <li>{t("gumroadStep3")}</li>
+        </ol>
+
+        <p className="mt-4 text-sm text-white/40 italic">
+          {t("gumroadNoAccount")}
+        </p>
+
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={onContinue}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-neon text-sm font-semibold text-[#050505] transition hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
+          >
+            {t("gumroadContinue")}
+          </button>
+          <button
+            onClick={onClose}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-white/15 text-sm font-medium text-white/70 transition hover:border-white/30 hover:bg-white/5"
+          >
+            {t("gumroadCancel")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LangToggle() {
   const { lang, setLang, t } = useI18n();
   return (
@@ -42,6 +102,7 @@ function FeatureRow({ included, text }: { included: boolean; text: string }) {
 export default function PricingPage() {
   const { t } = useI18n();
   const [isYearly, setIsYearly] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const plans = [
     {
@@ -193,12 +254,7 @@ export default function PricingPage() {
 
               {plan.ctaHref === "#" ? (
                 <button
-                  onClick={() => {
-                    const url = isYearly
-                      ? process.env.NEXT_PUBLIC_GUMROAD_YEARLY_URL || "[GUMROAD_YEARLY_URL]"
-                      : process.env.NEXT_PUBLIC_GUMROAD_MONTHLY_URL || "[GUMROAD_MONTHLY_URL]";
-                    window.open(url, "_blank");
-                  }}
+                  onClick={() => setShowModal(true)}
                   className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
                     plan.highlighted
                       ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
@@ -278,6 +334,20 @@ export default function PricingPage() {
           <p className="text-sm font-medium text-white/60">{t("refundGuarantee")}</p>
           <p className="mt-1 text-xs text-white/30">{t("refundDesc")}</p>
         </div>
+
+        {/* Gumroad redirect modal */}
+        <GumroadRedirectModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          onContinue={() => {
+            const url = isYearly
+              ? process.env.NEXT_PUBLIC_GUMROAD_YEARLY_URL || "[GUMROAD_YEARLY_URL]"
+              : process.env.NEXT_PUBLIC_GUMROAD_MONTHLY_URL || "[GUMROAD_MONTHLY_URL]";
+            window.open(url, "_blank");
+            setShowModal(false);
+          }}
+          isYearly={isYearly}
+        />
 
         {/* Trust badges */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-white/20">

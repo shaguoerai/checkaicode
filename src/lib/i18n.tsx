@@ -76,6 +76,15 @@ const dict: Record<Lang, Record<string, string>> = {
     proExperienceDay: "New users get 24 hours of full Pro features — no credit card required. Try before you buy. Auto-downgrades to Free after 24h unless you choose to upgrade.",
     refundGuarantee: "7-Day Satisfaction Guarantee",
     refundDesc: "Not satisfied? Cancel within 7 days for a full refund of your actual payment. No hassle, no penalties.",
+    // Gumroad modal
+    gumroadModalTitle: "Redirecting to Gumroad",
+    gumroadModalBody: "You are about to complete your subscription via Gumroad, our payment partner. On the Gumroad page:",
+    gumroadStep1: "Enter your email and payment details",
+    gumroadStep2: "Choose payment method (PayPal / Credit Card)",
+    gumroadStep3: "After payment, you will be automatically redirected back",
+    gumroadNoAccount: "No Gumroad account required — just your email and payment info to complete the purchase.",
+    gumroadContinue: "Continue",
+    gumroadCancel: "Cancel",
     // FAQ
     faqTitle: "Frequently Asked Questions",
     faqQ1: "What happens after the Launch Special ends (June 30)?",
@@ -181,6 +190,15 @@ const dict: Record<Lang, Record<string, string>> = {
     proExperienceDay: "新用户免费获得 24 小时全功能 Pro 体验 — 无需信用卡。先试用再购买。24 小时后自动降级为免费版，除非你选择升级。",
     refundGuarantee: "7 天满意保证",
     refundDesc: "不满意？7 天内取消可全额退还实际支付金额。无麻烦，无罚金。",
+    // Gumroad modal
+    gumroadModalTitle: "Redirecting to Gumroad",
+    gumroadModalBody: "你即将跳转到我们的支付服务商 Gumroad 完成订阅。在 Gumroad 页面上：",
+    gumroadStep1: "填写你的邮箱和支付信息",
+    gumroadStep2: "选择支付方式（支持 PayPal / 信用卡）",
+    gumroadStep3: "支付成功后自动跳转回本站",
+    gumroadNoAccount: "无需注册 Gumroad 账号，填写邮箱和支付信息即可完成购买。",
+    gumroadContinue: "继续购买",
+    gumroadCancel: "取消",
     // FAQ
     faqTitle: "常见问题",
     faqQ1: "Launch Special 结束后（6 月 30 日）会怎样？",
