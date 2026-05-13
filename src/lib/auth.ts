@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
+import { prisma } from "@/lib/prisma";
 
 const providers = [];
 
@@ -52,6 +53,54 @@ const authConfig = NextAuth({
   providers,
   pages: {
     signIn: "/auth/signin",
+  },
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account && user.email) {
+        const existing = await prisma.user.findUnique({
+          where: { email: user.email },
+        });
+        if (!existing) {
+          const trialEnd = new Date();
+          trialEnd.setHours(trialEnd.getHours() + 24);
+          await prisma.user.create({
+            data: {
+              email: user.email,
+              name: user.name,
+              image: user.image,
+              role: "pro",
+              gumroadCurrentPeriodEnd: trialEnd,
+            },
+          });
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      if (account && token.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email },
+          select: { id: true, role: true, gumroadCurrentPeriodEnd: true },
+        });
+        if (dbUser) {
+          token.sub = dbUser.id;
+          token.role = dbUser.role;
+          token.trialEndsAt = dbUser.gumroadCurrentPeriodEnd?.toISOString() || null;
+        }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub as string;
+        (session.user as any).role = token.role;
+        (session.user as any).trialEndsAt = token.trialEndsAt;
+      }
+      return session;
+    },
   },
 });
 
