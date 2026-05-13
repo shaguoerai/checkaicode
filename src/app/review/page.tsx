@@ -368,7 +368,20 @@ export default function ReviewPage() {
           privacyMode,
         }),
       });
-      const data = await res.json();
+      const raw = await res.text();
+      let data: any = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error(`Invalid server response (${res.status})`);
+        }
+      }
+      if (!res.ok) {
+        const message = data.detail ? `${data.error || "Request failed"}: ${data.detail}` : data.error;
+        setError(message || `Request failed (${res.status})`);
+        return;
+      }
       if (data.issues) {
         setIssues(data.issues);
         setFileResults(data.fileResults || null);
@@ -384,8 +397,9 @@ export default function ReviewPage() {
       } else {
         setError(data.error || "No result");
       }
-    } catch {
-      setError("Network error");
+    } catch (err: any) {
+      console.error("Analyze error:", err);
+      setError(err?.message || "Network error");
     } finally {
       setLoading(false);
     }

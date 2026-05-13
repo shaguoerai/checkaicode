@@ -31,6 +31,86 @@ function makeIssue(
   };
 }
 
+const SECRET_NAME_PATTERN =
+  "password|passwd|secret|api[_-]?key|api[_-]?secret|api[_-]?token|auth[_-]?token|access[_-]?token|refresh[_-]?token|client[_-]?secret|consumer[_-]?key|consumer[_-]?secret|session[_-]?key|private[_-]?key|database[_-]?url|connection[_-]?string|mongo[_-]?uri|redis[_-]?url|openai[_-]?api[_-]?key|anthropic[_-]?api[_-]?key|deepseek[_-]?api[_-]?key|github[_-]?token|gitlab[_-]?token|vercel[_-]?token|cloudflare[_-]?(?:api[_-]?)?(?:key|token)|stripe[_-]?(?:secret[_-]?)?key|slack[_-]?(?:bot[_-]?)?token|telegram[_-]?(?:bot[_-]?)?token";
+
+const SECRET_KEY_MARKERS = [
+  "apikey",
+  "apitoken",
+  "apisecret",
+  "secret",
+  "token",
+  "password",
+  "passwd",
+  "privatekey",
+  "clientsecret",
+  "consumersecret",
+  "databaseurl",
+  "connectionstring",
+  "mongouri",
+  "redisurl",
+];
+
+function maskSecretValue(value: string): string {
+  if (value.length <= 10) return "***";
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
+}
+
+function maskSecretSnippet(snippet: string): string {
+  const assignment = new RegExp(
+    `(\\b(?:${SECRET_NAME_PATTERN})\\b\\s*[:=]\\s*["']?)([^"'\\s,#}\\]]{6,})(["']?)`,
+    "gi"
+  );
+
+  return snippet
+    .replace(assignment, (_match, prefix: string, value: string, suffix: string) => {
+      return `${prefix}${maskSecretValue(value)}${suffix}`;
+    })
+    .replace(/\bsk-[^"'`\s,#}\]]{8,}/gi, (value) => maskSecretValue(value));
+}
+
+function stripInlineComment(value: string): string {
+  const hashIndex = value.indexOf(" #");
+  return hashIndex >= 0 ? value.slice(0, hashIndex) : value;
+}
+
+function normalizeSecretKeyName(key: string): string {
+  return key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+}
+
+function parseConfigAssignment(line: string): { key: string; value: string } | null {
+  const match = line.match(/^\s*["']?([A-Za-z_][A-Za-z0-9_.-]*)["']?\s*[:=]\s*(.+?)\s*[,}]?\s*$/);
+  if (!match) return null;
+
+  const rawValue = stripInlineComment(match[2].trim()).trim();
+  const value = rawValue.replace(/^["']|["']$/g, "");
+  return { key: match[1], value };
+}
+
+function looksLikeSecretAssignment(line: string): boolean {
+  const assignment = parseConfigAssignment(line);
+  if (!assignment) return false;
+
+  const normalizedKey = normalizeSecretKeyName(assignment.key);
+  if (!SECRET_KEY_MARKERS.some((marker) => normalizedKey.includes(marker))) {
+    return false;
+  }
+
+  const value = assignment.value.trim();
+  if (value.length < 6) return false;
+  if (/^(true|false|null|undefined|none|auto|input|local|test|development|production)$/i.test(value)) {
+    return false;
+  }
+  if (/^(process\.env\.|env\.|import\.meta\.env\.|os\.environ|Deno\.env)/.test(value)) {
+    return false;
+  }
+  if (/^\$\{?[A-Z0-9_]+\}?$/i.test(value)) {
+    return false;
+  }
+
+  return true;
+}
+
 const HALLUCINATED_PACKAGES: Record<string, string> = {
   "pandas_ai": "pandas-ai",
   "sklearn_pandas": "sklearn-pandas",
@@ -345,6 +425,25 @@ const SECURITY_PATTERNS = [
     title: "Hardcoded API Key detected",
     description: "Detected a possible API key in source code. Never commit secrets to version control.",
     fix_suggestion: "Move the key to an env var: import os; api_key = os.environ.get('API_KEY')",
+    severity: "critical" as const,
+  },
+  {
+    pattern: /\bsk-[^"'`\s,#}\]]{10,}/i,
+    id: "SEC-KEY-013",
+    title: "Hardcoded provider API key",
+    description: "A provider-style API key was found in source/config. Treat it as exposed and rotate it.",
+    fix_suggestion: "Move the key to an environment variable or secrets manager, then rotate the exposed key.",
+    severity: "critical" as const,
+  },
+  {
+    pattern: new RegExp(
+      `\\b(?:${SECRET_NAME_PATTERN})\\b\\s*[:=]\\s*(?:"[^"\\n]{6,}"|'[^'\\n]{6,}'|[^\\s#,'"}\\]]{6,})`,
+      "i"
+    ),
+    id: "SEC-KEY-014",
+    title: "Hardcoded credential in config",
+    description: "A credential-like config value is hardcoded. YAML, JSON, env, and code files should not contain secrets.",
+    fix_suggestion: "Load this value from an environment variable or secrets manager, and keep only a placeholder in config.",
     severity: "critical" as const,
   },
   {
@@ -936,6 +1035,24 @@ function detectSecurityIssues(code: string, lines: string[]): Issue[] {
   const issues: Issue[] = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    if (looksLikeSecretAssignment(line)) {
+      issues.push(
+        makeIssue(
+          {
+            id: "SEC-KEY-CONFIG",
+            type: "security",
+            severity: "critical",
+            title: "Hardcoded credential in config",
+            description: "A credential-like config value is hardcoded. YAML, JSON, env, and code files should not contain secrets.",
+            fix_suggestion: "Load this value from an environment variable or secrets manager, and keep only a placeholder in config.",
+          },
+          i + 1,
+          maskSecretSnippet(line.trim())
+        )
+      );
+      continue;
+    }
+
     for (const rule of SECURITY_PATTERNS) {
       if (rule.pattern.test(line)) {
         issues.push(
@@ -949,7 +1066,7 @@ function detectSecurityIssues(code: string, lines: string[]): Issue[] {
               fix_suggestion: rule.fix_suggestion,
             },
             i + 1,
-            line.trim()
+            maskSecretSnippet(line.trim())
           )
         );
       }

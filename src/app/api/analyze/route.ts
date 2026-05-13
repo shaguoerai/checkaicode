@@ -14,10 +14,49 @@ interface FileInput {
   language: string;
 }
 
-export async function POST(req: Request) {
-  const session = await auth();
-  const userId = session?.user?.id ?? null;
+const staleAuthCookies = [
+  "authjs.session-token",
+  "__Secure-authjs.session-token",
+  "next-auth.session-token",
+  "__Secure-next-auth.session-token",
+  "authjs.callback-url",
+  "__Secure-authjs.callback-url",
+  "next-auth.callback-url",
+  "__Secure-next-auth.callback-url",
+  "authjs.csrf-token",
+  "__Host-authjs.csrf-token",
+  "next-auth.csrf-token",
+  "__Host-next-auth.csrf-token",
+];
 
+function clearStaleAuthCookies(response: NextResponse) {
+  for (const name of staleAuthCookies) {
+    response.cookies.set(name, "", {
+      maxAge: 0,
+      path: "/",
+    });
+  }
+  return response;
+}
+
+async function getOptionalSession() {
+  try {
+    return { session: await auth(), authFailed: false };
+  } catch (error) {
+    console.error("Auth session read failed; continuing as anonymous:", error);
+    return { session: null, authFailed: true };
+  }
+}
+
+export async function POST(req: Request) {
+  const { session, authFailed } = await getOptionalSession();
+  const userId = session?.user?.id ?? null;
+  const json = (body: unknown, init?: ResponseInit) => {
+    const response = NextResponse.json(body, init);
+    return authFailed ? clearStaleAuthCookies(response) : response;
+  };
+
+  try {
     // 1. 额度检查（已登录按用户，未登录按 IP）
     const usage = await checkUsageLimit(userId, req);
     if (!usage.allowed) {
@@ -32,7 +71,7 @@ export async function POST(req: Request) {
         metadata: { remaining: usage.remaining, isPro: usage.isPro },
       });
 
-      return NextResponse.json(
+      return json(
         { error: "Daily limit reached. Upgrade to Pro for unlimited reviews." },
         { status: 429 }
       );
@@ -55,17 +94,17 @@ export async function POST(req: Request) {
       eventType: paywallEvent as any,
       metadata: { source: "client_report" },
     });
-    return NextResponse.json({ ok: true });
+    return json({ ok: true });
   }
 
   if (!files.length || !files.some(f => f.code?.trim())) {
-    return NextResponse.json({ error: "Code required" }, { status: 400 });
+    return json({ error: "Code required" }, { status: 400 });
   }
 
   const totalLines = files.reduce((sum, f) => sum + (f.code?.split("\n").length || 0), 0);
   const MAX_LINES = 3000;
   if (totalLines > MAX_LINES && !usage.isPro) {
-    return NextResponse.json(
+    return json(
       {
         error: `Total ${totalLines} lines across ${files.length} file(s). Free scan supports up to ${MAX_LINES} lines. Upgrade to Pro for unlimited file size.`,
         lines: totalLines,
@@ -76,7 +115,6 @@ export async function POST(req: Request) {
     );
   }
 
-  try {
     const allIssues: any[] = [];
     let totalScore = 0;
     const fileResults: { filename: string; score: number; issues: any[]; summary: string }[] = [];
@@ -195,7 +233,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({
+    return json({
       summary: overallSummary,
       score: overallScore,
       issues: allIssues,
@@ -205,9 +243,13 @@ export async function POST(req: Request) {
       scanMode: usage.isPro ? scanMode : undefined,
       privacyMode: usage.isPro ? privacyMode : undefined,
       llmEnabled: usage.isPro && !privacyMode,
+      authRecovered: authFailed,
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("Analyze error:", e);
-    return NextResponse.json({ error: "Analysis failed" }, { status: 500 });
+    return json(
+      { error: "Analysis failed", detail: e?.message || String(e) },
+      { status: 500 }
+    );
   }
 }
