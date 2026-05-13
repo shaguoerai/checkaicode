@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import type { Issue } from "@/lib/analyzer";
@@ -268,6 +268,15 @@ export default function ReviewPage() {
   const [scanMode, setScanMode] = useState<"standard" | "deep">("standard");
   const [privacyMode, setPrivacyMode] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [sessionUser, setSessionUser] = useState<{ name?: string | null; email?: string | null; image?: string | null } | null>(null);
+
+  /* Fetch session on mount */
+  useEffect(() => {
+    fetch("/api/auth/session", { credentials: "same-origin" })
+      .then(r => r.json())
+      .then(data => setSessionUser(data?.user ?? null))
+      .catch(() => setSessionUser(null));
+  }, []);
 
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
@@ -765,6 +774,30 @@ export default function ReviewPage() {
             <div className="flex flex-1 flex-col rounded-xl border border-red-500/20 bg-red-500/5 p-4 lg:max-w-xl">
               <h2 className="text-lg font-semibold text-red-400">{lang === "zh" ? "分析出错" : "Error"}</h2>
               <p className="mt-2 text-sm text-red-300/80">{error}</p>
+              {/* 429 rate limit — show contextual CTA */}
+              {error.includes("Daily limit reached") && (
+                <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+                  <h3 className="text-sm font-semibold text-white">{t("rateLimitTitle")}</h3>
+                  <p className="mt-1 text-xs text-white/50">{t("rateLimitDesc")}</p>
+                  <div className="mt-3 flex items-center gap-3">
+                    {!sessionUser ? (
+                      <Link
+                        href="/auth/signin"
+                        className="inline-flex h-9 items-center rounded-lg bg-white px-4 text-sm font-medium text-[#050505] transition hover:bg-white/90"
+                      >
+                        {t("rateLimitSignIn")}
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/pricing"
+                        className="inline-flex h-9 items-center rounded-lg bg-neon px-4 text-sm font-semibold text-[#050505] transition hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
+                      >
+                        {t("rateLimitUpgrade")}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

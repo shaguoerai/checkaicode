@@ -126,6 +126,11 @@ const dict: Record<Lang, Record<string, string>> = {
     // CTA
     ctaTitle: "Ready to ship code you actually trust?",
     ctaSubtitle: "One scan takes 3 seconds. One bug in production takes 3 hours to fix.",
+    // Rate limit
+    rateLimitTitle: "Daily Limit Reached",
+    rateLimitDesc: "You've used all your free scans for today.",
+    rateLimitSignIn: "Sign In",
+    rateLimitUpgrade: "Upgrade to Pro",
   },
   zh: {
     // Nav
@@ -240,6 +245,11 @@ const dict: Record<Lang, Record<string, string>> = {
     // CTA
     ctaTitle: "准备好发布你真正信任的代码了吗？",
     ctaSubtitle: "一次扫描只需 3 秒。一个生产环境 bug 需要 3 小时来修复。",
+    // Rate limit
+    rateLimitTitle: "今日额度已用完",
+    rateLimitDesc: "你今天的免费扫描次数已用完。",
+    rateLimitSignIn: "登录",
+    rateLimitUpgrade: "升级到 Pro",
   },
 };
 
