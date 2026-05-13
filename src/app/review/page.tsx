@@ -269,13 +269,37 @@ export default function ReviewPage() {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [sessionUser, setSessionUser] = useState<{ name?: string | null; email?: string | null; image?: string | null } | null>(null);
+  const [usage, setUsage] = useState<{ count: number; limit: number; isPro: boolean } | null>(null);
 
-  /* Fetch session on mount */
+  /* Fetch session + usage on mount */
   useEffect(() => {
     fetch("/api/auth/session", { credentials: "same-origin" })
       .then(r => r.json())
       .then(data => setSessionUser(data?.user ?? null))
       .catch(() => setSessionUser(null));
+
+    fetch("/api/user", { credentials: "same-origin" })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.usage) {
+          setUsage(data.usage);
+          setIsPro(data.usage.isPro ?? false);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  /* Refresh usage helper */
+  const refreshUsage = useCallback(() => {
+    fetch("/api/user", { credentials: "same-origin" })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.usage) {
+          setUsage(data.usage);
+          setIsPro(data.usage.isPro ?? false);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
@@ -397,6 +421,7 @@ export default function ReviewPage() {
         setSummary(data.summary || "");
         setScore(data.score ?? 100);
         setIsPro(data.isPro ?? false);
+        refreshUsage(); // refresh remaining count after analyze
       } else if (data.error && data.lines) {
         setError(
           lang === "zh"
@@ -469,6 +494,16 @@ export default function ReviewPage() {
             {t("viewPricing")}
           </Link>
           <LangToggle />
+          {usage && !usage.isPro && usage.limit > 0 && (
+            <span className="rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400">
+              {t("usageLeft").replace("{N}", String(usage.limit - usage.count))}
+            </span>
+          )}
+          {usage?.isPro && (
+            <span className="rounded-md border border-neon/20 bg-neon/10 px-2.5 py-1 text-xs font-medium text-neon">
+              {t("usagePro")}
+            </span>
+          )}
           <AuthStatus signInLabel={t("signIn")} />
         </div>
       </header>

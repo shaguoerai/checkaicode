@@ -131,6 +131,9 @@ const dict: Record<Lang, Record<string, string>> = {
     rateLimitDesc: "You've used all your free scans for today.",
     rateLimitSignIn: "Sign In",
     rateLimitUpgrade: "Upgrade to Pro",
+    // Usage counter
+    usageLeft: "{N} reviews left today",
+    usagePro: "Pro — Unlimited",
   },
   zh: {
     // Nav
@@ -250,6 +253,9 @@ const dict: Record<Lang, Record<string, string>> = {
     rateLimitDesc: "你今天的免费扫描次数已用完。",
     rateLimitSignIn: "登录",
     rateLimitUpgrade: "升级到 Pro",
+    // Usage counter
+    usageLeft: "今日剩余 {N} 次",
+    usagePro: "Pro — 无限使用",
   },
 };
 
