@@ -772,11 +772,9 @@ export default function ReviewPage() {
           {/* Error */}
           {error && (
             <div className="flex flex-1 flex-col rounded-xl border border-red-500/20 bg-red-500/5 p-4 lg:max-w-xl">
-              <h2 className="text-lg font-semibold text-red-400">{lang === "zh" ? "分析出错" : "Error"}</h2>
-              <p className="mt-2 text-sm text-red-300/80">{error}</p>
-              {/* 429 rate limit — show contextual CTA */}
-              {error.includes("Daily limit reached") && (
-                <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+              {error.includes("Daily limit reached") ? (
+                /* 429 rate limit — show contextual CTA */
+                <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
                   <h3 className="text-sm font-semibold text-white">{t("rateLimitTitle")}</h3>
                   <p className="mt-1 text-xs text-white/50">{t("rateLimitDesc")}</p>
                   <div className="mt-3 flex items-center gap-3">
@@ -797,6 +795,11 @@ export default function ReviewPage() {
                     )}
                   </div>
                 </div>
+              ) : (
+                <>
+                  <h2 className="text-lg font-semibold text-red-400">{lang === "zh" ? "分析出错" : "Error"}</h2>
+                  <p className="mt-2 text-sm text-red-300/80">{error}</p>
+                </>
               )}
             </div>
           )}
