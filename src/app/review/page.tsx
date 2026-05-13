@@ -674,7 +674,7 @@ export default function ReviewPage() {
                 <ScoreRing score={score} />
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold text-white">
-                    {issues.length === 0 ? t("resultNoIssues") : t("resultTitle")}
+                    {issues.length === 0 ? t("resultNoIssues") : t("resultTitle").replace("{N}", String(issues.length))}
                   </h2>
                   {summary && (
                     <p className="mt-0.5 text-xs text-white/40">{summary}</p>
