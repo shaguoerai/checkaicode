@@ -1,14 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
-const FREE_DAILY_LIMIT = 5;
-const ANON_DAILY_LIMIT = 3;
+export const FREE_DAILY_LIMIT = 5;
+export const ANON_DAILY_LIMIT = 3;
 
-function getClientIP(req: Request): string {
+export function getClientIP(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   const realIP = req.headers.get("x-real-ip");
   if (realIP) return realIP.trim();
   return "unknown";
+}
+
+export function getAnonymousUserId(req: Request): string {
+  return `anon_${getClientIP(req)}`;
 }
 
 function isProUser(user: any): boolean {
@@ -31,8 +35,7 @@ export async function checkUsageLimit(
 
   if (!userId) {
     // 未登录用户：按 IP 限流，每日 3 次（持久化到 DB）
-    const ip = req ? getClientIP(req) : "unknown";
-    const anonUserId = `anon_${ip}`;
+    const anonUserId = req ? getAnonymousUserId(req) : "anon_unknown";
     const usage = await prisma.usage.upsert({
       where: { userId_date: { userId: anonUserId, date: today } },
       update: {},
@@ -75,8 +78,7 @@ export async function incrementUsage(
 
   if (!userId) {
     // 未登录用户：按 IP 计数（持久化到 DB）
-    const ip = req ? getClientIP(req) : "unknown";
-    const anonUserId = `anon_${ip}`;
+    const anonUserId = req ? getAnonymousUserId(req) : "anon_unknown";
     const existing = await prisma.usage.findUnique({
       where: { userId_date: { userId: anonUserId, date: today } },
     });

@@ -1,13 +1,28 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ANON_DAILY_LIMIT, FREE_DAILY_LIMIT, getAnonymousUserId } from "@/lib/usage";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth();
+  const today = new Date().toISOString().split("T")[0];
+
   if (!session?.user?.id) {
-    return NextResponse.json({ reviews: [], usage: { count: 0, limit: 5 } });
+    const anonUserId = getAnonymousUserId(req);
+    const usageRecord = await prisma.usage.findUnique({
+      where: { userId_date: { userId: anonUserId, date: today } },
+    });
+
+    return NextResponse.json({
+      reviews: [],
+      usage: {
+        count: usageRecord?.count || 0,
+        limit: ANON_DAILY_LIMIT,
+        isPro: false,
+      },
+    });
   }
 
   const user = await prisma.user.findUnique({
@@ -17,7 +32,6 @@ export async function GET() {
     },
   });
 
-  const today = new Date().toISOString().split("T")[0];
   const usageRecord = await prisma.usage.findUnique({
     where: { userId_date: { userId: session.user.id, date: today } },
   });
@@ -31,7 +45,7 @@ export async function GET() {
     reviews: user?.reviews || [],
     usage: {
       count: usageRecord?.count || 0,
-      limit: isPro ? -1 : 5,
+      limit: isPro ? -1 : FREE_DAILY_LIMIT,
       isPro,
     },
   });
