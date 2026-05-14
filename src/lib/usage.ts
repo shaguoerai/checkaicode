@@ -3,9 +3,6 @@ import { prisma } from "@/lib/prisma";
 const FREE_DAILY_LIMIT = 5;
 const ANON_DAILY_LIMIT = 3;
 
-// 简单的内存 IP 限流存储（生产环境建议换 Redis）
-const ipUsageMap = new Map<string, { count: number; date: string }>();
-
 function getClientIP(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
@@ -30,16 +27,18 @@ export async function checkUsageLimit(
   remaining: number;
   isPro: boolean;
 }> {
+  const today = new Date().toISOString().split("T")[0];
+
   if (!userId) {
-    // 未登录用户：按 IP 限流，每日 3 次
+    // 未登录用户：按 IP 限流，每日 3 次（持久化到 DB）
     const ip = req ? getClientIP(req) : "unknown";
-    const today = new Date().toISOString().split("T")[0];
-    const record = ipUsageMap.get(ip);
-    if (!record || record.date !== today) {
-      ipUsageMap.set(ip, { count: 0, date: today });
-      return { allowed: true, remaining: ANON_DAILY_LIMIT, isPro: false };
-    }
-    const remaining = Math.max(0, ANON_DAILY_LIMIT - record.count);
+    const anonUserId = `anon_${ip}`;
+    const usage = await prisma.usage.upsert({
+      where: { userId_date: { userId: anonUserId, date: today } },
+      update: {},
+      create: { userId: anonUserId, date: today, count: 0 },
+    });
+    const remaining = Math.max(0, ANON_DAILY_LIMIT - usage.count);
     return { allowed: remaining > 0, remaining, isPro: false };
   }
 
@@ -58,7 +57,6 @@ export async function checkUsageLimit(
     return { allowed: true, remaining: -1, isPro: true };
   }
 
-  const today = new Date().toISOString().split("T")[0];
   const usage = await prisma.usage.upsert({
     where: { userId_date: { userId, date: today } },
     update: {},
@@ -73,20 +71,20 @@ export async function incrementUsage(
   userId: string | null,
   req?: Request
 ): Promise<void> {
+  const today = new Date().toISOString().split("T")[0];
+
   if (!userId) {
-    // 未登录用户：按 IP 计数
+    // 未登录用户：按 IP 计数（持久化到 DB）
     const ip = req ? getClientIP(req) : "unknown";
-    const today = new Date().toISOString().split("T")[0];
-    const record = ipUsageMap.get(ip);
-    if (!record || record.date !== today) {
-      ipUsageMap.set(ip, { count: 1, date: today });
-    } else {
-      record.count += 1;
-    }
+    const anonUserId = `anon_${ip}`;
+    await prisma.usage.upsert({
+      where: { userId_date: { userId: anonUserId, date: today } },
+      update: { count: { increment: 1 } },
+      create: { userId: anonUserId, date: today, count: 1 },
+    });
     return;
   }
 
-  const today = new Date().toISOString().split("T")[0];
   await prisma.usage.upsert({
     where: { userId_date: { userId, date: today } },
     update: { count: { increment: 1 } },
