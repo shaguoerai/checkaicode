@@ -4,6 +4,18 @@ export const FREE_DAILY_LIMIT = 5;
 export const ANON_DAILY_LIMIT = 3;
 
 export function getClientIP(req: Request): string {
+  // E2E 测试隔离：验证 secret 头后使用测试 IP
+  const e2eSecret = req.headers.get("x-checkaicode-e2e-secret");
+  const e2eIP = req.headers.get("x-checkaicode-e2e-ip");
+  if (
+    e2eSecret &&
+    e2eIP &&
+    process.env.E2E_TEST_SECRET &&
+    e2eSecret === process.env.E2E_TEST_SECRET
+  ) {
+    return e2eIP.trim();
+  }
+
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   const realIP = req.headers.get("x-real-ip");
