@@ -22,9 +22,10 @@ export async function GET() {
     where: { userId_date: { userId: session.user.id, date: today } },
   });
 
-  const isPro = user?.role === "pro" && (
-    (user?.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > new Date())
-  );
+  const now = new Date();
+  const stripeActive = user?.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
+  const gumroadActive = user?.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now;
+  const isPro = user?.role === "pro" && (stripeActive || gumroadActive);
 
   return NextResponse.json({
     reviews: user?.reviews || [],
