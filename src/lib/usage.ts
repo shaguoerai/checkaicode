@@ -77,17 +77,33 @@ export async function incrementUsage(
     // 未登录用户：按 IP 计数（持久化到 DB）
     const ip = req ? getClientIP(req) : "unknown";
     const anonUserId = `anon_${ip}`;
-    await prisma.usage.upsert({
+    const existing = await prisma.usage.findUnique({
       where: { userId_date: { userId: anonUserId, date: today } },
-      update: { count: { increment: 1 } },
-      create: { userId: anonUserId, date: today, count: 1 },
     });
+    if (existing) {
+      await prisma.usage.update({
+        where: { id: existing.id },
+        data: { count: { increment: 1 } },
+      });
+    } else {
+      await prisma.usage.create({
+        data: { userId: anonUserId, date: today, count: 1 },
+      });
+    }
     return;
   }
 
-  await prisma.usage.upsert({
+  const existing = await prisma.usage.findUnique({
     where: { userId_date: { userId, date: today } },
-    update: { count: { increment: 1 } },
-    create: { userId, date: today, count: 1 },
   });
+  if (existing) {
+    await prisma.usage.update({
+      where: { id: existing.id },
+      data: { count: { increment: 1 } },
+    });
+  } else {
+    await prisma.usage.create({
+      data: { userId, date: today, count: 1 },
+    });
+  }
 }
