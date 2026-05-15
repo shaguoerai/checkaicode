@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const GUMROAD_API_TOKEN = process.env.GUMROAD_API_TOKEN || "";
-const GUMROAD_PRODUCT_ID = process.env.GUMROAD_PRODUCT_ID || "";
+const GUMROAD_PRODUCT_IDS = ["zrvmiq", "oytjtg"];
 
 export const runtime = "nodejs";
 
+function getPeriodDays(productId: string): number {
+  return productId === "oytjtg" ? 365 : 30;
+}
+
 export async function POST(req: Request) {
-  if (!GUMROAD_API_TOKEN || !GUMROAD_PRODUCT_ID) {
-    return NextResponse.json({ error: "Gumroad not configured" }, { status: 500 });
-  }
-
   const payload = await req.text();
-  const signature = req.headers.get("x-gumroad-signature") || "";
 
-  // Gumroad webhooks don't have built-in signature verification like Stripe,
-  // but we can validate the payload structure and product_id
   let event: any;
   try {
     event = JSON.parse(payload);
@@ -23,17 +19,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  // Validate product_id matches our configured product
-  if (event.product_id !== GUMROAD_PRODUCT_ID) {
+  const productId = event.product_id || "";
+  if (!GUMROAD_PRODUCT_IDS.includes(productId)) {
     return NextResponse.json({ error: "Product mismatch" }, { status: 400 });
   }
+
+  const periodDays = getPeriodDays(productId);
 
   const email = event.email || event.purchaser_email || "";
   const licenseKey = event.license_key || "";
   const subscriptionId = event.subscription_id || event.recurrence || "";
   const eventType = event.recurrence ? "subscription_recurring_charge" : event.resource_name || "sale";
 
-  // Find user by email or license key
   const user = await prisma.user.findFirst({
     where: {
       OR: [
@@ -44,14 +41,12 @@ export async function POST(req: Request) {
   });
 
   if (!user && eventType !== "sale") {
-    // For subscription events, we need an existing user
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   switch (eventType) {
     case "sale": {
       if (!user) {
-        // First-time purchase: user will activate via /api/gumroad/verify
         return NextResponse.json({ received: true, note: "User will activate via license key" });
       }
       await prisma.user.update({
@@ -59,9 +54,9 @@ export async function POST(req: Request) {
         data: {
           role: "pro",
           gumroadLicenseKey: licenseKey || user.gumroadLicenseKey,
-          gumroadProductId: GUMROAD_PRODUCT_ID,
+          gumroadProductId: productId,
           gumroadSubscriptionId: subscriptionId || user.gumroadSubscriptionId,
-          gumroadCurrentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          gumroadCurrentPeriodEnd: new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000),
         },
       });
       break;
@@ -73,7 +68,7 @@ export async function POST(req: Request) {
           where: { id: user.id },
           data: {
             role: "pro",
-            gumroadCurrentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            gumroadCurrentPeriodEnd: new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000),
           },
         });
       }
