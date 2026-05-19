@@ -509,16 +509,16 @@ export default function ReviewPage() {
       </header>
 
       {/* Content */}
-      <main className="flex flex-1 flex-col px-6 py-6">
-        <div className="mb-5">
+      <main className="flex min-h-0 flex-1 flex-col px-6 py-5">
+        <div className="mb-4">
           <h1 className="text-2xl font-bold text-white">{t("reviewTitle")}</h1>
           <p className="mt-1 text-white/40">{t("reviewSubtitle")}</p>
         </div>
 
-        <div className="flex flex-1 flex-col gap-4 lg:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
           {/* Editor */}
           <div
-            className="flex flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-4"
+            className="flex min-h-0 flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-4"
             onDrop={onDrop}
             onDragOver={(e) => e.preventDefault()}
           >
@@ -602,7 +602,7 @@ export default function ReviewPage() {
               value={activeTab.code}
               onChange={(e) => setActiveCode(e.target.value)}
               placeholder={t("codePlaceholder")}
-              className="min-h-[300px] flex-1 resize-none rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
+              className="h-[clamp(220px,42svh,430px)] min-h-0 flex-none resize-y rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
               spellCheck={false}
             />
             {/* Pro controls: scan mode + privacy toggle */}
@@ -668,7 +668,7 @@ export default function ReviewPage() {
 
           {/* Result */}
           {issues !== null && (
-            <div className="flex flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-4 lg:max-w-xl">
+            <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-4 lg:max-w-xl">
               {/* Stats header */}
               <div className="mb-4 flex items-center gap-4">
                 <ScoreRing score={score} />
