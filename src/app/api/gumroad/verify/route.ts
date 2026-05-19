@@ -28,29 +28,38 @@ export async function POST(req: Request) {
   // Verify license against all product IDs
   let data: any = null;
   let matchedProductId: string | null = null;
+  let lastError = "Invalid license key";
+  const normalizedLicenseKey = licenseKey.trim();
 
   for (const productId of GUMROAD_PRODUCT_IDS) {
-    const verifyRes = await fetch("https://api.gumroad.com/v2/licenses/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        product_id: productId,
-        license_key: licenseKey.trim(),
-      }),
+    const body = new URLSearchParams({
+      product_id: productId,
+      license_key: normalizedLicenseKey,
+      increment_uses_count: "false",
     });
 
+    const verifyRes = await fetch("https://api.gumroad.com/v2/licenses/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+
+    const result = await verifyRes.json().catch(() => null);
     if (verifyRes.ok) {
-      const result = await verifyRes.json();
-      if (result.success && result.uses) {
+      if (result?.success === true) {
         data = result;
         matchedProductId = productId;
         break;
       }
     }
+
+    if (typeof result?.message === "string" && result.message.trim()) {
+      lastError = result.message;
+    }
   }
 
   if (!data) {
-    return NextResponse.json({ error: "Invalid license key" }, { status: 400 });
+    return NextResponse.json({ error: lastError }, { status: 400 });
   }
 
   const purchase = data.purchase || {};
@@ -64,7 +73,7 @@ export async function POST(req: Request) {
     where: { id: session.user.id },
     data: {
       role: "pro",
-      gumroadLicenseKey: licenseKey.trim(),
+      gumroadLicenseKey: normalizedLicenseKey,
       gumroadProductId: matchedProductId,
       gumroadSubscriptionId: subscriptionId,
       gumroadCurrentPeriodEnd: currentPeriodEnd,
