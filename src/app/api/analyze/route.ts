@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     await trackPaywallEvent({
       userId,
       ip: clientIP,
-      eventType: paywallEvent as any,
+      eventType: paywallEvent as "upgrade" | "leave" | "return_next_day",
       metadata: { source: "client_report" },
     });
     return json({ ok: true });
@@ -115,9 +115,23 @@ export async function POST(req: Request) {
     );
   }
 
-    const allIssues: any[] = [];
+interface ScanIssue {
+  type: string;
+  severity: string;
+  file: string;
+  line: number;
+  endLine?: number;
+  message: string;
+  ruleId: string;
+  fixSuggestion?: string;
+  fixCode?: string;
+  referenceUrl?: string;
+  codeSnippet?: string;
+}
+
+    const allIssues: ScanIssue[] = [];
     let totalScore = 0;
-    const fileResults: { filename: string; score: number; issues: any[]; summary: string }[] = [];
+    const fileResults: { filename: string; score: number; issues: ScanIssue[]; summary: string }[] = [];
 
     for (const file of files) {
       // 2. 本地规则引擎扫描
@@ -127,7 +141,7 @@ export async function POST(req: Request) {
       const semgrepResult = await runSemgrep(file.code, file.language || "auto");
 
       // 4. 合并结果（rule-engine + Semgrep）
-      const ruleIssues = ruleResult.issues.map((ri: any) => ({
+      const ruleIssues = ruleResult.issues.map((ri) => ({
         type: ri.type === "security" ? "security" : "quality",
         severity: ri.severity,
         file: file.filename || "input",
@@ -145,7 +159,7 @@ export async function POST(req: Request) {
 
       // 去重（按行号+规则ID去重，rule-engine和Semgrep可能检出同一问题）
       const seen = new Set<string>();
-      const deduped = mergedIssues.filter((issue: any) => {
+      const deduped = mergedIssues.filter((issue) => {
         const key = `${issue.line}:${issue.ruleId}`;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -157,7 +171,7 @@ export async function POST(req: Request) {
       deduped.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
       // 5. Pro 用户 + 非隐私模式 → LLM 深度分析（只对有问题代码生成修复建议）
-      let llmIssues: any[] = [];
+      let llmIssues: ScanIssue[] = [];
       if (usage.isPro && !privacyMode && deduped.length > 0) {
         try {
           const llmResult = await runLLMAnalysis({
@@ -177,7 +191,7 @@ export async function POST(req: Request) {
       const finalIssues = [...deduped, ...llmIssues];
       // 二次去重：LLM 可能对同一行给出建议，保留 LLM 增强版
       const finalSeen = new Set<string>();
-      const finalDeduped = finalIssues.filter((issue: any) => {
+      const finalDeduped = finalIssues.filter((issue) => {
         const key = `${issue.line}:${issue.ruleId || issue.message?.slice(0, 30)}`;
         if (finalSeen.has(key)) return false;
         finalSeen.add(key);
@@ -194,9 +208,9 @@ export async function POST(req: Request) {
       score = Math.max(0, Math.min(100, score));
       totalScore += score;
 
-      const critCount = finalDeduped.filter((i: any) => i.severity === "critical").length;
-      const warnCount = finalDeduped.filter((i: any) => i.severity === "warning").length;
-      const infoCount = finalDeduped.filter((i: any) => i.severity === "info").length;
+      const critCount = finalDeduped.filter((i) => i.severity === "critical").length;
+      const warnCount = finalDeduped.filter((i) => i.severity === "warning").length;
+      const infoCount = finalDeduped.filter((i) => i.severity === "info").length;
 
       const summary = finalDeduped.length === 0
         ? "No issues found."
@@ -227,7 +241,7 @@ export async function POST(req: Request) {
           language: files[0].language || "auto",
           filename: files[0].filename || null,
           score: overallScore,
-          issues: allIssues as any,
+          issues: allIssues as unknown as Record<string, unknown>[],
           summary: overallSummary,
         },
       });
@@ -245,10 +259,11 @@ export async function POST(req: Request) {
       llmEnabled: usage.isPro && !privacyMode,
       authRecovered: authFailed,
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Analyze error:", e);
+    const errMsg = (e as Error)?.message || String(e);
     return json(
-      { error: "Analysis failed", detail: e?.message || String(e) },
+      { error: "Analysis failed", detail: errMsg },
       { status: 500 }
     );
   }

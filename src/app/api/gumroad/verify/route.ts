@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   // Verify license against all product IDs
-  let data: any = null;
+  let data: Record<string, unknown> | null = null;
   let matchedProductId: string | null = null;
   let lastError = "Invalid license key";
   const normalizedLicenseKey = licenseKey.trim();
@@ -86,8 +86,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: lastError }, { status: 400 });
   }
 
-  const purchase = data.purchase || {};
-  const subscriptionId = purchase.subscription_id || null;
+  const purchase = (data.purchase || {}) as Record<string, unknown>;
+  const subscriptionId = (purchase.subscription_id as string) || null;
   const currentPeriodEnd = subscriptionId
     ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Default 30 days for subscription
     : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // Default 365 days for one-time

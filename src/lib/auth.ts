@@ -55,7 +55,7 @@ const authConfig = NextAuth({
     signIn: "/auth/signin",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile: _profile }) {
       if (account && user.email) {
         const existing = await prisma.user.findUnique({
           where: { email: user.email },
@@ -96,8 +96,8 @@ const authConfig = NextAuth({
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub as string;
-        (session.user as any).role = token.role;
-        (session.user as any).trialEndsAt = token.trialEndsAt;
+        (session.user as unknown as Record<string, unknown>).role = token.role;
+        (session.user as unknown as Record<string, unknown>).trialEndsAt = token.trialEndsAt;
       }
       return session;
     },

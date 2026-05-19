@@ -1090,7 +1090,7 @@ function detectSemanticIssues(code: string, lines: string[]): Issue[] {
               title: rule.title,
               description: rule.description,
               fix_suggestion: rule.fix_suggestion,
-              fix_code: (rule as any).fix_code,
+              fix_code: (rule as { fix_code?: string }).fix_code,
             },
             i + 1,
             line.trim()
@@ -1132,7 +1132,7 @@ function detectCrossLangMethods(code: string, lines: string[], language: string)
 }
 
 // ── CodeSlick P0: Framework deprecated API detector ──
-function detectDeprecatedApis(code: string, lines: string[], language: string): Issue[] {
+function detectDeprecatedApis(code: string, lines: string[], _language: string): Issue[] {
   const issues: Issue[] = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];

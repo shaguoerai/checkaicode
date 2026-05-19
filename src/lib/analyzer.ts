@@ -25,6 +25,10 @@ export interface Issue {
   message: string;
   ruleId: string;
   endLine?: number;
+  fixSuggestion?: string;
+  fixCode?: string;
+  codeSnippet?: string;
+  referenceUrl?: string;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {

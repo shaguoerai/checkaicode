@@ -177,7 +177,7 @@ function getTypeColor(type: string): string {
 }
 
 /* Code snippet with line numbers */
-function CodeSnippet({ code, line, endLine, highlightLine }: { code?: string; line?: number; endLine?: number; highlightLine?: number }) {
+function CodeSnippet({ code, line, endLine: _endLine, highlightLine }: { code?: string; line?: number; endLine?: number; highlightLine?: number }) {
   if (!code) return null;
   const lines = code.split("\n");
   const start = Math.max(0, (highlightLine || line || 1) - 3);
@@ -250,12 +250,19 @@ function generateId() {
   return Math.random().toString(36).slice(2, 9);
 }
 
+interface FileResult {
+  filename: string;
+  score: number;
+  summary: string;
+  issues: Issue[];
+}
+
 export default function ReviewPage() {
   const { lang, t } = useI18n();
   const [tabs, setTabs] = useState<FileTab[]>([{ id: generateId(), filename: "input", code: "", language: "auto" }]);
   const [activeTabId, setActiveTabId] = useState<string>(tabs[0].id);
   const [issues, setIssues] = useState<Issue[] | null>(null);
-  const [fileResults, setFileResults] = useState<any[] | null>(null);
+  const [fileResults, setFileResults] = useState<FileResult[] | null>(null);
   const [summary, setSummary] = useState("");
   const [score, setScore] = useState(100);
   const [loading, setLoading] = useState(false);
@@ -405,7 +412,7 @@ export default function ReviewPage() {
         }),
       });
       const raw = await res.text();
-      let data: any = {};
+      let data: Record<string, unknown> = {};
       if (raw) {
         try {
           data = JSON.parse(raw);
@@ -434,9 +441,9 @@ export default function ReviewPage() {
       } else {
         setError(data.error || "No result");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Analyze error:", err);
-      setError(err?.message || "Network error");
+      setError((err as Error)?.message || "Network error");
     } finally {
       setLoading(false);
     }
@@ -460,8 +467,8 @@ export default function ReviewPage() {
     md += `## Issues (${issues.length})\n\n`;
     for (const issue of issues) {
       md += `### ${issue.ruleId} (${issue.severity})\n- **File:** ${issue.file}\n- **Line:** ${issue.line}${issue.endLine && issue.endLine !== issue.line ? `-${issue.endLine}` : ""}\n- **Type:** ${mapIssueType(issue.type)}\n- **Message:** ${issue.message}\n\n`;
-      if ((issue as any).fixSuggestion) {
-        md += `**Fix:** ${(issue as any).fixSuggestion}\n\n`;
+      if (issue.fixSuggestion) {
+        md += `**Fix:** ${issue.fixSuggestion}\n\n`;
       }
     }
     navigator.clipboard.writeText(md);
@@ -791,11 +798,11 @@ export default function ReviewPage() {
                                   : ""}{" "}
                                 · {issue.ruleId}
                               </p>
-                              <CodeSnippet code={(issue as any).codeSnippet} line={issue.line} highlightLine={issue.line} />
+                              <CodeSnippet code={issue.codeSnippet} line={issue.line} highlightLine={issue.line} />
                               <FixSection
-                                suggestion={(issue as any).fixSuggestion}
-                                fixCode={(issue as any).fixCode}
-                                referenceUrl={(issue as any).referenceUrl}
+                                suggestion={issue.fixSuggestion}
+                                fixCode={issue.fixCode}
+                                referenceUrl={issue.referenceUrl}
                               />
                             </div>
                           </div>

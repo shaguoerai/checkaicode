@@ -61,7 +61,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-semibold text-white">What we collect</h2>
               <ul className="mt-3 list-disc space-y-2 pl-5">
-                <li><strong className="text-white">Email / OAuth identity</strong> — only what's needed to sign you in (Google or GitHub profile info).</li>
+                <li><strong className="text-white">Email / OAuth identity</strong> — only what&apos;s needed to sign you in (Google or GitHub profile info).</li>
                 <li><strong className="text-white">Code you paste</strong> — transmitted to our scanner for analysis. Not used for model training.</li>
                 <li><strong className="text-white">Payment info</strong> — handled entirely by Stripe. We never see your card number.</li>
               </ul>

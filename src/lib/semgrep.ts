@@ -22,14 +22,19 @@ interface SemgrepFinding {
   };
 }
 
+interface SemgrepError {
+  message?: string;
+  [key: string]: unknown;
+}
+
 interface SemgrepOutput {
   results: SemgrepFinding[];
-  errors: any[];
+  errors: SemgrepError[];
 }
 
 interface SemgrepApiOutput {
   results: SemgrepFinding[];
-  errors: any[];
+  errors: SemgrepError[];
   scanTimeMs: number;
   exitCode?: number;
   stderr?: string;
@@ -143,9 +148,9 @@ function parseSemgrepOutput(output: SemgrepApiOutput, tmpDir: string) {
   return {
     issues,
     scanTimeMs: output.scanTimeMs,
-    error: output.errors?.length
-      ? output.errors.map((e: any) => e.message || String(e)).join("; ")
-      : undefined,
+      error: output.errors?.length
+        ? output.errors.map((e: SemgrepError) => e.message || String(e)).join("; ")
+        : undefined,
   };
 }
 
@@ -322,10 +327,11 @@ async function runSemgrepLocal(code: string, language: string): Promise<{
     });
 
     return { issues, scanTimeMs };
-  } catch (err: any) {
-    if (err.status === 1 && err.stdout) {
+  } catch (err: unknown) {
+    const error = err as { status?: number; stdout?: string; message?: string };
+    if (error.status === 1 && error.stdout) {
       try {
-        const output: SemgrepOutput = JSON.parse(err.stdout);
+        const output: SemgrepOutput = JSON.parse(error.stdout);
         const scanTimeMs = 0;
         const issues = output.results.map((r) => {
           const severity = mapSemgrepSeverity(
@@ -351,10 +357,10 @@ async function runSemgrepLocal(code: string, language: string): Promise<{
         });
         return { issues, scanTimeMs };
       } catch {
-        return { issues: [], scanTimeMs: 0, error: err.message };
+        return { issues: [], scanTimeMs: 0, error: error.message };
       }
     }
-    return { issues: [], scanTimeMs: 0, error: err.message };
+    return { issues: [], scanTimeMs: 0, error: error.message };
   } finally {
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true });

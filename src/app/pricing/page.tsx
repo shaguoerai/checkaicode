@@ -9,12 +9,10 @@ function GumroadRedirectModal({
   open,
   onClose,
   onContinue,
-  isYearly,
 }: {
   open: boolean;
   onClose: () => void;
   onContinue: () => void;
-  isYearly: boolean;
 }) {
   const { t } = useI18n();
   if (!open) return null;
@@ -454,7 +452,6 @@ export default function PricingPage() {
             setActivationError("");
             setShowActivationModal(true);
           }}
-          isYearly={isYearly}
         />
 
         <LicenseActivationModal

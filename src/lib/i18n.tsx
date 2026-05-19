@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 type Lang = "en" | "zh";
 
@@ -286,17 +286,13 @@ const dict: Record<Lang, Record<string, string>> = {
 };
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("en");
-
-  useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem("lang") : null;
-    if (saved === "zh" || saved === "en") {
-      setLangState(saved);
-    } else {
-      const browserLang = typeof navigator !== "undefined" ? navigator.language : "en";
-      setLangState(browserLang.startsWith("zh") ? "zh" : "en");
-    }
-  }, []);
+  const [lang, setLangState] = useState<Lang>(() => {
+    if (typeof window === "undefined") return "en";
+    const saved = localStorage.getItem("lang");
+    if (saved === "zh" || saved === "en") return saved;
+    const browserLang = navigator.language;
+    return browserLang.startsWith("zh") ? "zh" : "en";
+  });
 
   const setLang = (l: Lang) => {
     setLangState(l);

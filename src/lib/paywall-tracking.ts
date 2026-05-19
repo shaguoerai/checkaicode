@@ -6,7 +6,7 @@ interface TrackPaywallEventInput {
   userId: string | null;
   ip: string;
   eventType: PaywallEventType;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -27,7 +27,7 @@ export async function trackPaywallEvent({
       userId,
       ip,
       eventType,
-      metadata: metadata as any,
+      metadata: metadata as Record<string, unknown>,
     },
   });
 }

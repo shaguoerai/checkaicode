@@ -29,7 +29,7 @@ function ParticleCanvas() {
     if (!ctx) return;
 
     let w = 0, h = 0;
-    let particles: { x: number; y: number; vx: number; vy: number; r: number; alpha: number }[] = [];
+    const particles: { x: number; y: number; vx: number; vy: number; r: number; alpha: number }[] = [];
     let animId = 0;
 
     const resize = () => {
@@ -264,10 +264,10 @@ export default function Home() {
                   <div className="glass-card rounded-xl p-6 font-mono text-sm">
                     <div className="text-white/30 mb-2">package.json</div>
                     <div className="text-white/80">
-                      <span className="text-[#7ee787]">"react"</span>: <span className="text-[#79c0ff]">"^18.2.0"</span>
+                      <span className="text-[#7ee787]">&quot;react&quot;</span>: <span className="text-[#79c0ff]">&quot;^18.2.0&quot;</span>
                     </div>
                     <div className="text-white/40 line-through mt-1">
-                      <span className="text-[#ff7b72]">"react"</span>: <span className="text-[#ff7b72]">"19.0.0-beta"</span>
+                      <span className="text-[#ff7b72]">&quot;react&quot;</span>: <span className="text-[#ff7b72]">&quot;19.0.0-beta&quot;</span>
                     </div>
                     <div className="mt-3 text-xs text-neon border-l-2 border-neon/30 pl-3">
                       Breaking change: useId() signature changed in v19

@@ -12,21 +12,21 @@ function getPeriodDays(productId: string): number {
 export async function POST(req: Request) {
   const payload = await req.text();
 
-  let event: any;
+  let event: Record<string, unknown>;
   try {
     event = JSON.parse(payload);
   } catch {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const productId = event.product_id || "";
+  const productId = (event.product_id as string) || "";
   if (!GUMROAD_PRODUCT_IDS.includes(productId)) {
     return NextResponse.json({ error: "Product mismatch" }, { status: 400 });
   }
 
   const periodDays = getPeriodDays(productId);
 
-  const email = event.email || event.purchaser_email || "";
+  const email = (event.email as string) || (event.purchaser_email as string) || "";
   const licenseKey = event.license_key || "";
   const subscriptionId = event.subscription_id || event.recurrence || "";
   const eventType = event.recurrence ? "subscription_recurring_charge" : event.resource_name || "sale";

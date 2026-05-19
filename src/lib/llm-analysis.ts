@@ -22,12 +22,13 @@ interface LLMIssue {
   codeSnippet?: string;
   referenceUrl?: string;
   aiGenerated?: boolean;
+  falsePositive?: boolean;
 }
 
 interface LLMAnalysisInput {
   code: string;
   language: string;
-  issues: any[];
+  issues: LLMIssue[];
   mode: LLMScanMode;
 }
 
@@ -180,7 +181,7 @@ async function callDeepSeek(
   return { content, model };
 }
 
-function parseLLMResponse(raw: string): any[] {
+function parseLLMResponse(raw: string): LLMIssue[] {
   // 尝试提取 JSON 数组（LLM 可能包裹在 markdown code block 中）
   const jsonMatch = raw.match(/\[[\s\S]*\]/);
   if (!jsonMatch) {
@@ -193,7 +194,7 @@ function parseLLMResponse(raw: string): any[] {
       throw new Error("LLM response is not an array");
     }
     return parsed;
-  } catch (e) {
+  } catch (_e: unknown) {
     // 尝试清理常见 LLM 格式问题后重新解析
     const cleaned = jsonMatch[0]
       .replace(/,\s*([\]}])/g, "$1") // 去除尾随逗号
@@ -240,7 +241,7 @@ export async function runLLMAnalysis(
   }
 
   // 3. 解析 LLM 输出
-  let parsed: any[];
+  let parsed: LLMIssue[];
   try {
     parsed = parseLLMResponse(result.content);
   } catch (parseErr) {

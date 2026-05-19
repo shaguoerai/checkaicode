@@ -27,7 +27,13 @@ export function getAnonymousUserId(req: Request): string {
   return `anon_${getClientIP(req)}`;
 }
 
-function isProUser(user: any): boolean {
+interface ProUser {
+  role?: string;
+  stripeCurrentPeriodEnd?: Date | null;
+  gumroadCurrentPeriodEnd?: Date | null;
+}
+
+function isProUser(user: ProUser | null): boolean {
   if (!user || user.role !== "pro") return false;
   const now = new Date();
   const stripeActive = user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
