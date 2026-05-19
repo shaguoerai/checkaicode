@@ -74,17 +74,29 @@ export async function POST(req: Request) {
       }
       break;
     }
-    case "subscription_cancelled":
+    case "subscription_cancelled": {
+      if (user) {
+        // 用户取消订阅：保留已付周期，不立刻降级
+        // Pro 会在 gumroadCurrentPeriodEnd 到期后自然失效
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            gumroadSubscriptionId: null,
+          },
+        });
+      }
+      break;
+    }
     case "subscription_ended": {
       if (user) {
         const now = new Date();
         const stripeActive = user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
+        // 周期真正结束：如果无 Stripe 权益则降级
         await prisma.user.update({
           where: { id: user.id },
           data: {
             role: stripeActive ? "pro" : "free",
             gumroadSubscriptionId: null,
-            gumroadCurrentPeriodEnd: new Date(),
           },
         });
       }
@@ -92,13 +104,12 @@ export async function POST(req: Request) {
     }
     case "subscription_payment_failed": {
       if (user) {
-        const now = new Date();
-        const stripeActive = user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
+        // 支付失败：保留当前已付周期，不立刻降级
+        // 用户可在周期内更新支付方式
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            role: stripeActive ? "pro" : "free",
-            gumroadCurrentPeriodEnd: new Date(),
+            gumroadSubscriptionId: null,
           },
         });
       }
