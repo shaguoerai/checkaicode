@@ -65,6 +65,81 @@ function GumroadRedirectModal({
   );
 }
 
+function LicenseActivationModal({
+  open,
+  licenseKey,
+  error,
+  isSubmitting,
+  onChange,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean;
+  licenseKey: string;
+  error: string;
+  isSubmitting: boolean;
+  onChange: (value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  const { t } = useI18n();
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-8 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-semibold text-white">
+          {t("activateLicenseTitle")}
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-white/50">
+          {t("activateLicenseBody")}
+        </p>
+
+        <label className="mt-6 block text-sm font-medium text-white/70" htmlFor="license-key">
+          {t("licenseKeyLabel")}
+        </label>
+        <input
+          id="license-key"
+          value={licenseKey}
+          onChange={(e) => onChange(e.target.value)}
+          className="mt-2 h-11 w-full rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-neon/50"
+          placeholder={t("licenseKeyPlaceholder")}
+          autoFocus
+        />
+
+        {error && (
+          <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            {error}
+          </p>
+        )}
+
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-neon text-sm font-semibold text-[#050505] transition hover:bg-neon-dim disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? t("activatingLicense") : t("activateLicenseButton")}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-white/15 text-sm font-medium text-white/70 transition hover:border-white/30 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {t("gumroadCancel")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LangToggle() {
   const { lang, setLang, t } = useI18n();
   return (
@@ -103,6 +178,41 @@ export default function PricingPage() {
   const { t } = useI18n();
   const [isYearly, setIsYearly] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showActivationModal, setShowActivationModal] = useState(false);
+  const [licenseKey, setLicenseKey] = useState("");
+  const [activationError, setActivationError] = useState("");
+  const [isActivating, setIsActivating] = useState(false);
+
+  async function activateLicense() {
+    const trimmedKey = licenseKey.trim();
+    if (!trimmedKey) {
+      setActivationError(t("licenseKeyRequired"));
+      return;
+    }
+
+    setIsActivating(true);
+    setActivationError("");
+
+    try {
+      const res = await fetch("/api/gumroad/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ licenseKey: trimmedKey }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        window.location.href = "/review";
+        return;
+      }
+
+      setActivationError(data.error || t("licenseActivationFailed"));
+    } catch {
+      setActivationError(t("licenseVerificationFailed"));
+    } finally {
+      setIsActivating(false);
+    }
+  }
 
   const plans = [
     {
@@ -316,6 +426,18 @@ export default function PricingPage() {
                   — {t("yearlySave")}
                 </p>
               )}
+
+              {plan.highlighted && (
+                <button
+                  onClick={() => {
+                    setActivationError("");
+                    setShowActivationModal(true);
+                  }}
+                  className="mt-3 text-center text-xs font-medium text-white/45 transition hover:text-neon"
+                >
+                  {t("activatePurchasedLicense")}
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -347,6 +469,18 @@ export default function PricingPage() {
             setShowModal(false);
           }}
           isYearly={isYearly}
+        />
+
+        <LicenseActivationModal
+          open={showActivationModal}
+          licenseKey={licenseKey}
+          error={activationError}
+          isSubmitting={isActivating}
+          onChange={setLicenseKey}
+          onClose={() => {
+            if (!isActivating) setShowActivationModal(false);
+          }}
+          onSubmit={activateLicense}
         />
 
         {/* Trust badges */}
