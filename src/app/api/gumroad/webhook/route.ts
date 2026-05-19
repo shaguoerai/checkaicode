@@ -77,10 +77,12 @@ export async function POST(req: Request) {
     case "subscription_cancelled":
     case "subscription_ended": {
       if (user) {
+        const now = new Date();
+        const stripeActive = user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            role: "free",
+            role: stripeActive ? "pro" : "free",
             gumroadSubscriptionId: null,
             gumroadCurrentPeriodEnd: new Date(),
           },
@@ -90,10 +92,12 @@ export async function POST(req: Request) {
     }
     case "subscription_payment_failed": {
       if (user) {
+        const now = new Date();
+        const stripeActive = user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            role: "free",
+            role: stripeActive ? "pro" : "free",
             gumroadCurrentPeriodEnd: new Date(),
           },
         });
