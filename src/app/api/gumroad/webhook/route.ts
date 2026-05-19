@@ -9,17 +9,70 @@ function getPeriodDays(productId: string): number {
   return productId === "oytjtg" ? 365 : 30;
 }
 
+function resolveEventType(event: Record<string, unknown>): string {
+  // Priority: resource_name > event > type > fallback
+  const raw =
+    (event.resource_name as string) ||
+    (event.event as string) ||
+    (event.type as string) ||
+    "";
+  return raw.toLowerCase().trim();
+}
+
+function parsePayload(req: Request, text: string): Record<string, unknown> {
+  const contentType = req.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return JSON.parse(text);
+  }
+
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const params = new URLSearchParams(text);
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of params) {
+      // Gumroad may send nested JSON strings for some fields
+      if (value.startsWith("{") || value.startsWith("[")) {
+        try {
+          result[key] = JSON.parse(value);
+        } catch {
+          result[key] = value;
+        }
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  // Fallback: try JSON first, then form-urlencoded
+  try {
+    return JSON.parse(text);
+  } catch {
+    const params = new URLSearchParams(text);
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of params) {
+      result[key] = value;
+    }
+    return result;
+  }
+}
+
 export async function POST(req: Request) {
   const payload = await req.text();
 
   let event: Record<string, unknown>;
   try {
-    event = JSON.parse(payload);
+    event = parsePayload(req, payload);
   } catch {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
+  const eventType = resolveEventType(event);
+
+  // Minimal safe log: event type + product_id only, no PII
   const productId = (event.product_id as string) || "";
+  console.log(`[gumroad-webhook] event=${eventType} product=${productId}`);
+
   if (!GUMROAD_PRODUCT_IDS.includes(productId)) {
     return NextResponse.json({ error: "Product mismatch" }, { status: 400 });
   }
@@ -27,9 +80,9 @@ export async function POST(req: Request) {
   const periodDays = getPeriodDays(productId);
 
   const email = (event.email as string) || (event.purchaser_email as string) || "";
-  const licenseKey = event.license_key || "";
-  const subscriptionId = event.subscription_id || event.recurrence || "";
-  const eventType = event.recurrence ? "subscription_recurring_charge" : event.resource_name || "sale";
+  const licenseKey = (event.license_key as string) || "";
+  const subscriptionId = (event.subscription_id as string) || "";
+  const recurrence = (event.recurrence as string) || "";
 
   const user = await prisma.user.findFirst({
     where: {
@@ -39,6 +92,27 @@ export async function POST(req: Request) {
       ],
     },
   });
+
+  // Unknown event types: log and return 200 to avoid Gumroad retry storms
+  const knownEvents = new Set([
+    "sale",
+    "subscription_recurring_charge",
+    "subscription_renewed",
+    "subscription_cancelled",
+    "cancellation",
+    "subscription_ended",
+    "subscription_payment_failed",
+    "refund",
+    "dispute",
+    "dispute_won",
+    "subscription_restarted",
+    "subscription_updated",
+  ]);
+
+  if (!knownEvents.has(eventType)) {
+    console.log(`[gumroad-webhook] unknown event type: ${eventType}`);
+    return NextResponse.json({ received: true, note: "Unknown event type" });
+  }
 
   if (!user && eventType !== "sale") {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -62,7 +136,9 @@ export async function POST(req: Request) {
       break;
     }
     case "subscription_recurring_charge":
-    case "subscription_renewed": {
+    case "subscription_renewed":
+    case "subscription_restarted":
+    case "subscription_updated": {
       if (user) {
         await prisma.user.update({
           where: { id: user.id },
@@ -74,7 +150,8 @@ export async function POST(req: Request) {
       }
       break;
     }
-    case "subscription_cancelled": {
+    case "subscription_cancelled":
+    case "cancellation": {
       if (user) {
         // 用户取消订阅：保留已付周期，不立刻降级
         // Pro 会在 gumroadCurrentPeriodEnd 到期后自然失效
@@ -113,6 +190,17 @@ export async function POST(req: Request) {
           },
         });
       }
+      break;
+    }
+    case "refund": {
+      // 退款事件：暂不自动降级，需人工审核或根据退款类型处理
+      console.log(`[gumroad-webhook] refund received for user=${user?.id}`);
+      break;
+    }
+    case "dispute":
+    case "dispute_won": {
+      // 争议事件：记录日志，暂不自动处理
+      console.log(`[gumroad-webhook] dispute event=${eventType} user=${user?.id}`);
       break;
     }
   }
