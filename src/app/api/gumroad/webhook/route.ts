@@ -82,7 +82,6 @@ export async function POST(req: Request) {
   const email = (event.email as string) || (event.purchaser_email as string) || "";
   const licenseKey = (event.license_key as string) || "";
   const subscriptionId = (event.subscription_id as string) || "";
-  const recurrence = (event.recurrence as string) || "";
 
   const user = await prisma.user.findFirst({
     where: {
@@ -194,13 +193,13 @@ export async function POST(req: Request) {
     }
     case "refund": {
       // 退款事件：暂不自动降级，需人工审核或根据退款类型处理
-      console.log(`[gumroad-webhook] refund received for user=${user?.id}`);
+      console.log(`[gumroad-webhook] refund received product=${productId}`);
       break;
     }
     case "dispute":
     case "dispute_won": {
       // 争议事件：记录日志，暂不自动处理
-      console.log(`[gumroad-webhook] dispute event=${eventType} user=${user?.id}`);
+      console.log(`[gumroad-webhook] dispute event=${eventType} product=${productId}`);
       break;
     }
   }
