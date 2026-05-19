@@ -316,6 +316,9 @@ export default function ReviewPage() {
     setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, filename } : t));
   };
 
+  const activeLineCount = Math.max(1, activeTab.code.split("\n").length);
+  const editorHeight = Math.min(360, Math.max(180, activeLineCount * 22 + 96));
+
   const addTab = () => {
     const newTab: FileTab = { id: generateId(), filename: `file${tabs.length + 1}`, code: "", language: "auto" };
     setTabs(prev => [...prev, newTab]);
@@ -602,7 +605,8 @@ export default function ReviewPage() {
               value={activeTab.code}
               onChange={(e) => setActiveCode(e.target.value)}
               placeholder={t("codePlaceholder")}
-              className="h-[clamp(220px,42svh,430px)] min-h-0 flex-none resize-y rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
+              className="min-h-[180px] max-h-[360px] flex-none resize-y overflow-auto rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
+              style={{ height: editorHeight }}
               spellCheck={false}
             />
             {/* Pro controls: scan mode + privacy toggle */}
