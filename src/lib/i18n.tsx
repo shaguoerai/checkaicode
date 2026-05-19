@@ -95,6 +95,7 @@ const dict: Record<Lang, Record<string, string>> = {
     licenseKeyRequired: "Enter your Gumroad license key.",
     licenseActivationFailed: "License activation failed.",
     licenseVerificationFailed: "Verification failed. Please try again later.",
+    currentPlan: "Current plan",
     // FAQ
     faqTitle: "Frequently Asked Questions",
     faqQ1: "What happens after the Launch Special ends (June 30)?",
@@ -227,6 +228,7 @@ const dict: Record<Lang, Record<string, string>> = {
     licenseKeyRequired: "请输入 Gumroad license key。",
     licenseActivationFailed: "License 激活失败。",
     licenseVerificationFailed: "验证失败，请稍后再试。",
+    currentPlan: "当前方案",
     // FAQ
     faqTitle: "常见问题",
     faqQ1: "Launch Special 结束后（6 月 30 日）会怎样？",

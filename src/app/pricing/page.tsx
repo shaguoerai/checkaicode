@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { AuthStatus } from "@/components/auth-status";
 
@@ -182,6 +182,14 @@ export default function PricingPage() {
   const [licenseKey, setLicenseKey] = useState("");
   const [activationError, setActivationError] = useState("");
   const [isActivating, setIsActivating] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/user", { credentials: "same-origin" })
+      .then((res) => res.json())
+      .then((data) => setIsPro(data?.usage?.isPro === true))
+      .catch(() => setIsPro(false));
+  }, []);
 
   async function activateLicense() {
     const trimmedKey = licenseKey.trim();
@@ -362,7 +370,11 @@ export default function PricingPage() {
                 ))}
               </div>
 
-              {plan.ctaHref === "#" ? (
+              {plan.highlighted && isPro ? (
+                <div className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg border border-neon/25 bg-neon/10 text-sm font-semibold text-neon">
+                  {t("currentPlan")}
+                </div>
+              ) : plan.ctaHref === "#" ? (
                 <button
                   onClick={() => setShowModal(true)}
                   className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
@@ -414,7 +426,7 @@ export default function PricingPage() {
               )}
 
               {/* Secondary CTA for Pro yearly */}
-              {plan.highlighted && !isYearly && (
+              {plan.highlighted && !isPro && !isYearly && (
                 <p className="mt-3 text-center text-xs text-white/30">
                   Or{" "}
                   <button
@@ -427,7 +439,7 @@ export default function PricingPage() {
                 </p>
               )}
 
-              {plan.highlighted && (
+              {plan.highlighted && !isPro && (
                 <button
                   onClick={() => {
                     setActivationError("");
