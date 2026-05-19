@@ -31,31 +31,40 @@ export async function POST(req: Request) {
   let lastError = "Invalid license key";
   const normalizedLicenseKey = licenseKey.trim();
 
-  for (const productId of GUMROAD_PRODUCT_IDS) {
-    const body = new URLSearchParams({
-      product_id: productId,
-      license_key: normalizedLicenseKey,
-      increment_uses_count: "false",
-    });
+  for (const productIdentifier of GUMROAD_PRODUCT_IDS) {
+    const attempts = [
+      ["product_id", productIdentifier],
+      ["product_permalink", productIdentifier],
+    ] as const;
 
-    const verifyRes = await fetch("https://api.gumroad.com/v2/licenses/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-    });
+    for (const [productField, productValue] of attempts) {
+      const body = new URLSearchParams({
+        [productField]: productValue,
+        license_key: normalizedLicenseKey,
+        increment_uses_count: "false",
+      });
 
-    const result = await verifyRes.json().catch(() => null);
-    if (verifyRes.ok) {
-      if (result?.success === true) {
-        data = result;
-        matchedProductId = productId;
-        break;
+      const verifyRes = await fetch("https://api.gumroad.com/v2/licenses/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      });
+
+      const result = await verifyRes.json().catch(() => null);
+      if (verifyRes.ok) {
+        if (result?.success === true) {
+          data = result;
+          matchedProductId = result.purchase?.product_id || productIdentifier;
+          break;
+        }
+      }
+
+      if (typeof result?.message === "string" && result.message.trim()) {
+        lastError = result.message;
       }
     }
 
-    if (typeof result?.message === "string" && result.message.trim()) {
-      lastError = result.message;
-    }
+    if (data) break;
   }
 
   if (!data) {
