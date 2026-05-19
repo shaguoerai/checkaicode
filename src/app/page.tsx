@@ -168,8 +168,8 @@ export default function Home() {
 
         {/* Hero */}
         <main className="flex flex-col">
-          <section className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-neon/20 bg-neon/5 px-4 py-1.5 mb-6">
+          <section className="flex min-h-[calc(100svh-73px)] flex-col items-center justify-center px-6 py-12 text-center lg:py-14">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-neon/20 bg-neon/5 px-4 py-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-neon" />
@@ -177,16 +177,16 @@ export default function Home() {
               <span className="text-xs font-medium text-neon">{t("heroBadge")}</span>
             </div>
 
-            <h1 className="max-w-3xl text-5xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
+            <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl">
               {t("heroTitle")}
               <span className="block mt-2 bg-gradient-to-r from-neon via-[#a7f3d0] to-neon bg-clip-text text-transparent animate-gradient">
                 {t("heroTitleHighlight")}
               </span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg text-white/50 leading-relaxed">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/50 sm:text-lg">
               {t("heroSubtitle")}
             </p>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/review"
                 className="group inline-flex h-12 items-center justify-center rounded-full bg-neon px-8 text-sm font-semibold text-[#050505] transition hover:bg-neon-dim hover:shadow-[0_0_30px_rgba(126,231,135,0.3)]"
@@ -205,7 +205,7 @@ export default function Home() {
             </div>
 
             {/* Social proof */}
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-white/30 text-sm">
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-white/30">
               <div className="flex items-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
@@ -231,7 +231,7 @@ export default function Home() {
             </div>
 
             {/* Code demo card */}
-            <div className="mt-16 w-full max-w-2xl animate-float">
+            <div className="mt-12 w-full max-w-2xl animate-float">
               <CodeDemoCard />
             </div>
           </section>
