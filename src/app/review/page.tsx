@@ -478,8 +478,8 @@ export default function ReviewPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#050505]">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <div className="flex items-center gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-white/5">
+        <div className="flex min-w-0 items-center gap-2">
           <div className="h-6 w-6 rounded bg-neon/20 flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ee787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
@@ -489,7 +489,7 @@ export default function ReviewPage() {
             Check AI Code
           </Link>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition">
             {t("viewPricing")}
           </Link>
@@ -509,8 +509,8 @@ export default function ReviewPage() {
       </header>
 
       {/* Content */}
-      <main className="flex flex-1 flex-col px-6 py-8">
-        <div className="mb-6">
+      <main className="flex flex-1 flex-col px-6 py-6">
+        <div className="mb-5">
           <h1 className="text-2xl font-bold text-white">{t("reviewTitle")}</h1>
           <p className="mt-1 text-white/40">{t("reviewSubtitle")}</p>
         </div>
@@ -563,7 +563,7 @@ export default function ReviewPage() {
               </button>
             </div>
 
-            <div className="mb-3 flex items-center gap-3">
+            <div className="mb-3 flex flex-wrap items-center gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-medium text-white transition hover:border-neon/30 hover:bg-white/8"
@@ -602,12 +602,12 @@ export default function ReviewPage() {
               value={activeTab.code}
               onChange={(e) => setActiveCode(e.target.value)}
               placeholder={t("codePlaceholder")}
-              className="min-h-[320px] flex-1 resize-none rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
+              className="min-h-[300px] flex-1 resize-none rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
               spellCheck={false}
             />
             {/* Pro controls: scan mode + privacy toggle */}
             {isPro && (
-              <div className="mt-3 flex items-center gap-4">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 {/* Scan mode segmented control */}
                 <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.02] p-0.5">
                   <button

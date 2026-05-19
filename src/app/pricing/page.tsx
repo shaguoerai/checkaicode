@@ -273,8 +273,8 @@ export default function PricingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#050505]">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <div className="flex items-center gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-white/5">
+        <div className="flex min-w-0 items-center gap-2">
           <div className="h-6 w-6 rounded bg-neon/20 flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ee787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
@@ -284,7 +284,7 @@ export default function PricingPage() {
             Check AI Code
           </Link>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <Link href="/review" className="text-sm text-white/60 hover:text-white transition">
             {t("reviewTitle")}
           </Link>
@@ -294,9 +294,9 @@ export default function PricingPage() {
       </header>
 
       {/* Content */}
-      <main className="flex flex-1 flex-col items-center px-6 py-16">
-        <div className="text-center mb-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-neon/20 bg-neon/5 px-3 py-1 mb-4">
+      <main className="flex flex-1 flex-col items-center px-6 py-10 lg:py-12">
+        <div className="mb-3 text-center">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-neon/20 bg-neon/5 px-3 py-1">
             <span className="text-xs font-medium text-neon">Simple pricing</span>
           </div>
         </div>
@@ -306,7 +306,7 @@ export default function PricingPage() {
         <p className="mt-2 text-white/40">{t("pricingSubtitle")}</p>
 
         {/* Billing toggle */}
-        <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.02] px-2 py-1.5">
+        <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.02] px-2 py-1.5">
           <button
             onClick={() => setIsYearly(false)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${!isYearly ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"}`}
@@ -322,11 +322,11 @@ export default function PricingPage() {
           </button>
         </div>
 
-        <div className="mt-12 grid max-w-4xl gap-6 sm:grid-cols-3">
+        <div className="mt-8 grid w-full max-w-5xl gap-5 sm:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative rounded-2xl p-8 flex flex-col ${
+              className={`relative flex flex-col rounded-2xl p-6 ${
                 plan.highlighted
                   ? "border-2 border-neon/30 bg-gradient-to-b from-neon/5 to-transparent"
                   : "border border-white/8 bg-white/[0.02]"
@@ -356,7 +356,7 @@ export default function PricingPage() {
               )}
               <p className="mt-1 text-sm text-white/40">{plan.desc}</p>
 
-              <div className="mt-6 flex-1">
+              <div className="mt-5 flex-1">
                 {plan.features.map((f, i) => (
                   <FeatureRow key={i} included={f.included} text={f.text} />
                 ))}
@@ -365,7 +365,7 @@ export default function PricingPage() {
               {plan.ctaHref === "#" ? (
                 <button
                   onClick={() => setShowModal(true)}
-                  className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
+                  className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
                     plan.highlighted
                       ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
                       : "border border-white/15 text-white hover:border-white/30 hover:bg-white/5"
@@ -392,7 +392,7 @@ export default function PricingPage() {
                       alert("Verification failed. Please try again later.");
                     }
                   }}
-                  className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
+                  className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
                     plan.highlighted
                       ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
                       : "border border-white/15 text-white hover:border-white/30 hover:bg-white/5"
@@ -403,7 +403,7 @@ export default function PricingPage() {
               ) : (
                 <Link
                   href={plan.ctaHref}
-                  className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
+                  className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
                     plan.highlighted
                       ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
                       : "border border-white/15 text-white hover:border-white/30 hover:bg-white/5"
@@ -443,7 +443,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pro Experience Day note */}
-        <div className="mt-10 max-w-2xl rounded-xl border border-white/8 bg-white/[0.02] px-6 py-4">
+        <div className="mt-8 max-w-2xl rounded-xl border border-white/8 bg-white/[0.02] px-6 py-4">
           <p className="text-sm text-white/50">
             <span className="text-neon">💡</span>{" "}
             <strong className="text-white/70">{t("proExperienceDayTitle")}</strong>{" "}
@@ -486,7 +486,7 @@ export default function PricingPage() {
         />
 
         {/* Trust badges */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-white/20">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-white/20">
           <div className="flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />

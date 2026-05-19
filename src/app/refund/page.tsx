@@ -9,8 +9,8 @@ export default function RefundPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#050505]">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <div className="flex items-center gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-white/5">
+        <div className="flex min-w-0 items-center gap-2">
           <div className="h-6 w-6 rounded bg-neon/20 flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ee787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
@@ -20,7 +20,7 @@ export default function RefundPage() {
             Check AI Code
           </Link>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <Link href="/review" className="text-sm text-white/60 hover:text-white transition">
             {t("reviewTitle")}
           </Link>
@@ -34,7 +34,7 @@ export default function RefundPage() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-6 py-12">
+      <main className="flex-1 px-6 py-8 lg:py-10">
         <div className="mx-auto max-w-3xl">
           <h1 className="text-3xl font-bold text-white sm:text-4xl">
             Refund Policy
@@ -43,7 +43,7 @@ export default function RefundPage() {
             Last updated: May 2026
           </p>
 
-          <div className="mt-10 space-y-8 text-white/60">
+          <div className="mt-8 space-y-8 text-white/60">
             <section>
               <h2 className="text-xl font-semibold text-white">7-Day Satisfaction Guarantee</h2>
               <p className="mt-3 leading-relaxed">
