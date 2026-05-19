@@ -255,7 +255,7 @@ export default function PricingPage() {
         { text: t("proApi"), included: true },
       ],
       cta: isYearly ? t("lockInYearly") : t("upgradeToPro"),
-      ctaHref: "#",
+      ctaHref: "gumroad",
       highlighted: true,
       billingToggle: true,
     },
@@ -272,7 +272,7 @@ export default function PricingPage() {
         { text: t("teamSla"), included: true },
       ],
       cta: t("contactSales"),
-      ctaHref: "#",
+      ctaHref: "mailto:shaguoer@gmail.com?subject=Check%20AI%20Code%20Team%20Plan",
       highlighted: false,
     },
   ];
@@ -373,36 +373,9 @@ export default function PricingPage() {
                 <div className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg border border-neon/25 bg-neon/10 text-sm font-semibold text-neon">
                   {t("currentPlan")}
                 </div>
-              ) : plan.ctaHref === "#" ? (
-                <button
-                  onClick={() => setShowModal(true)}
-                  className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
-                    plan.highlighted
-                      ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
-                      : "border border-white/15 text-white hover:border-white/30 hover:bg-white/5"
-                  }`}
-                >
-                  {plan.cta}
-                </button>
               ) : plan.ctaHref === "gumroad" ? (
                 <button
-                  onClick={async () => {
-                    try {
-                      const res = await fetch("/api/gumroad/verify", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ licenseKey: prompt("Enter your Gumroad license key:") }),
-                      });
-                      const data = await res.json();
-                      if (data.success) {
-                        window.location.reload();
-                      } else {
-                        alert(data.error || "Invalid license key.");
-                      }
-                    } catch {
-                      alert("Verification failed. Please try again later.");
-                    }
-                  }}
+                  onClick={() => setShowModal(true)}
                   className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
                     plan.highlighted
                       ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
