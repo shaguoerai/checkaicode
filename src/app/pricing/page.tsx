@@ -467,6 +467,8 @@ export default function PricingPage() {
               : process.env.NEXT_PUBLIC_GUMROAD_MONTHLY_URL || "[GUMROAD_MONTHLY_URL]";
             window.open(url, "_blank");
             setShowModal(false);
+            setActivationError("");
+            setShowActivationModal(true);
           }}
           isYearly={isYearly}
         />
