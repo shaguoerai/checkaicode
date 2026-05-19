@@ -10,6 +10,11 @@ const GUMROAD_PRODUCT_IDS = (process.env.GUMROAD_PRODUCT_IDS || "")
 
 export const runtime = "nodejs";
 
+function getSuggestedProductId(message: string): string | null {
+  const match = message.match(/product_id['"]?\s+to\s+['"]([^'"]+)['"]/i);
+  return match?.[1] || null;
+}
+
 export async function POST(req: Request) {
   if (!GUMROAD_API_TOKEN || GUMROAD_PRODUCT_IDS.length === 0) {
     return NextResponse.json({ error: "Gumroad not configured" }, { status: 500 });
@@ -32,12 +37,18 @@ export async function POST(req: Request) {
   const normalizedLicenseKey = licenseKey.trim();
 
   for (const productIdentifier of GUMROAD_PRODUCT_IDS) {
-    const attempts = [
+    const attempts: Array<["product_id" | "product_permalink", string]> = [
       ["product_id", productIdentifier],
       ["product_permalink", productIdentifier],
-    ] as const;
+    ];
+    const attempted = new Set<string>();
 
-    for (const [productField, productValue] of attempts) {
+    for (let index = 0; index < attempts.length; index++) {
+      const [productField, productValue] = attempts[index];
+      const attemptKey = `${productField}:${productValue}`;
+      if (attempted.has(attemptKey)) continue;
+      attempted.add(attemptKey);
+
       const body = new URLSearchParams({
         [productField]: productValue,
         license_key: normalizedLicenseKey,
@@ -61,6 +72,10 @@ export async function POST(req: Request) {
 
       if (typeof result?.message === "string" && result.message.trim()) {
         lastError = result.message;
+        const suggestedProductId = getSuggestedProductId(result.message);
+        if (suggestedProductId) {
+          attempts.push(["product_id", suggestedProductId]);
+        }
       }
     }
 
