@@ -121,8 +121,8 @@ export default function TermsPage() {
               <h2 className="text-xl font-semibold text-white">8. Contact</h2>
               <p className="mt-3 leading-relaxed">
                 Questions? Email{" "}
-                <a href="mailto:shaguoer@gmail.com" className="text-neon underline underline-offset-4 hover:text-neon/80">
-                  shaguoer@gmail.com
+                <a href="mailto:support@checkaicode.com" className="text-neon underline underline-offset-4 hover:text-neon/80">
+                  support@checkaicode.com
                 </a>.
               </p>
             </section>

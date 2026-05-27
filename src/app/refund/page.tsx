@@ -67,8 +67,8 @@ export default function RefundPage() {
               <h2 className="text-xl font-semibold text-white">How to Request a Refund</h2>
               <p className="mt-3 leading-relaxed">
                 Email{" "}
-                <a href="mailto:shaguoer@gmail.com" className="text-neon underline underline-offset-4 hover:text-neon/80">
-                  shaguoer@gmail.com
+                <a href="mailto:support@checkaicode.com" className="text-neon underline underline-offset-4 hover:text-neon/80">
+                  support@checkaicode.com
                 </a>{" "}
                 with your Gumroad order ID or license key. We will process your request within 2 business days.
               </p>
@@ -78,8 +78,8 @@ export default function RefundPage() {
               <h2 className="text-xl font-semibold text-white">Contact</h2>
               <p className="mt-3 leading-relaxed">
                 Questions? Email{" "}
-                <a href="mailto:shaguoer@gmail.com" className="text-neon underline underline-offset-4 hover:text-neon/80">
-                  shaguoer@gmail.com
+                <a href="mailto:support@checkaicode.com" className="text-neon underline underline-offset-4 hover:text-neon/80">
+                  support@checkaicode.com
                 </a>.
               </p>
             </section>

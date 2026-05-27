@@ -270,7 +270,7 @@ export default function PricingPage() {
         { text: t("teamSla"), included: true },
       ],
       cta: t("contactSales"),
-      ctaHref: "mailto:shaguoer@gmail.com?subject=Check%20AI%20Code%20Team%20Plan",
+      ctaHref: "mailto:support@checkaicode.com?subject=Check%20AI%20Code%20Team%20Plan",
       highlighted: false,
     },
   ];
