@@ -31,14 +31,16 @@ interface ProUser {
   role?: string;
   stripeCurrentPeriodEnd?: Date | null;
   gumroadCurrentPeriodEnd?: Date | null;
+  creemCurrentPeriodEnd?: Date | null;
 }
 
 function isProUser(user: ProUser | null): boolean {
   if (!user || user.role !== "pro") return false;
   const now = new Date();
-  const stripeActive = user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
-  const gumroadActive = user.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now;
-  return stripeActive || gumroadActive;
+  const stripeActive = Boolean(user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now);
+  const gumroadActive = Boolean(user.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now);
+  const creemActive = Boolean(user.creemCurrentPeriodEnd && user.creemCurrentPeriodEnd > now);
+  return stripeActive || gumroadActive || creemActive;
 }
 
 export async function checkUsageLimit(
@@ -69,6 +71,7 @@ export async function checkUsageLimit(
       role: true,
       stripeCurrentPeriodEnd: true,
       gumroadCurrentPeriodEnd: true,
+      creemCurrentPeriodEnd: true,
     },
   });
 

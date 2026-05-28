@@ -39,6 +39,10 @@ async function main() {
       gumroadProductId: null,
       gumroadSubscriptionId: null,
       gumroadCurrentPeriodEnd: null,
+      creemCustomerId: null,
+      creemProductId: null,
+      creemSubscriptionId: null,
+      creemCurrentPeriodEnd: null,
     },
   });
 

@@ -51,6 +51,10 @@ model User {
   gumroadProductId       String? @map("gumroad_product_id")
   gumroadSubscriptionId  String? @map("gumroad_subscription_id")
   gumroadCurrentPeriodEnd DateTime? @map("gumroad_current_period_end")
+  creemCustomerId        String? @map("creem_customer_id")
+  creemProductId         String? @map("creem_product_id")
+  creemSubscriptionId    String? @map("creem_subscription_id")
+  creemCurrentPeriodEnd  DateTime? @map("creem_current_period_end")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 

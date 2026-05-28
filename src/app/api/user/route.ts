@@ -39,7 +39,8 @@ export async function GET(req: Request) {
   const now = new Date();
   const stripeActive = user?.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
   const gumroadActive = user?.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now;
-  const isPro = user?.role === "pro" && (stripeActive || gumroadActive);
+  const creemActive = user?.creemCurrentPeriodEnd && user.creemCurrentPeriodEnd > now;
+  const isPro = user?.role === "pro" && (stripeActive || gumroadActive || creemActive);
 
   return NextResponse.json({
     reviews: user?.reviews || [],

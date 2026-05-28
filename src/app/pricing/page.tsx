@@ -5,14 +5,18 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { AuthStatus } from "@/components/auth-status";
 
-function GumroadRedirectModal({
+function CreemRedirectModal({
   open,
   onClose,
   onContinue,
+  isLoading,
+  error,
 }: {
   open: boolean;
   onClose: () => void;
   onContinue: () => void;
+  isLoading: boolean;
+  error: string;
 }) {
   const { t } = useI18n();
   if (!open) return null;
@@ -27,110 +31,43 @@ function GumroadRedirectModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-semibold text-white">
-          {t("gumroadModalTitle")}
+          {t("creemModalTitle")}
         </h2>
 
         <p className="mt-4 text-sm text-white/60 leading-relaxed">
-          {t("gumroadModalBody")}
+          {t("creemModalBody")}
         </p>
 
         <ol className="mt-3 ml-4 list-decimal text-sm text-white/60 space-y-1">
-          <li>{t("gumroadStep1")}</li>
-          <li>{t("gumroadStep2")}</li>
-          <li>{t("gumroadStep3")}</li>
+          <li>{t("creemStep1")}</li>
+          <li>{t("creemStep2")}</li>
+          <li>{t("creemStep3")}</li>
         </ol>
 
         <p className="mt-4 text-sm text-white/40 italic">
-          {t("gumroadNoAccount")}
+          {t("creemNoAccount")}
         </p>
-
-        <div className="mt-6 flex gap-3">
-          <button
-            onClick={onContinue}
-            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-neon text-sm font-semibold text-[#050505] transition hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
-          >
-            {t("gumroadContinue")}
-          </button>
-          <button
-            onClick={onClose}
-            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-white/15 text-sm font-medium text-white/70 transition hover:border-white/30 hover:bg-white/5"
-          >
-            {t("gumroadCancel")}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LicenseActivationModal({
-  open,
-  licenseKey,
-  error,
-  isSubmitting,
-  onChange,
-  onClose,
-  onSubmit,
-}: {
-  open: boolean;
-  licenseKey: string;
-  error: string;
-  isSubmitting: boolean;
-  onChange: (value: string) => void;
-  onClose: () => void;
-  onSubmit: () => void;
-}) {
-  const { t } = useI18n();
-  if (!open) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-8 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-xl font-semibold text-white">
-          {t("activateLicenseTitle")}
-        </h2>
-        <p className="mt-3 text-sm leading-relaxed text-white/50">
-          {t("activateLicenseBody")}
-        </p>
-
-        <label className="mt-6 block text-sm font-medium text-white/70" htmlFor="license-key">
-          {t("licenseKeyLabel")}
-        </label>
-        <input
-          id="license-key"
-          value={licenseKey}
-          onChange={(e) => onChange(e.target.value)}
-          className="mt-2 h-11 w-full rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-neon/50"
-          placeholder={t("licenseKeyPlaceholder")}
-          autoFocus
-        />
 
         {error && (
-          <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          <p className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
             {error}
           </p>
         )}
 
         <div className="mt-6 flex gap-3">
           <button
-            onClick={onSubmit}
-            disabled={isSubmitting}
-            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-neon text-sm font-semibold text-[#050505] transition hover:bg-neon-dim disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={onContinue}
+            disabled={isLoading}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-neon text-sm font-semibold text-[#050505] transition hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
           >
-            {isSubmitting ? t("activatingLicense") : t("activateLicenseButton")}
+            {isLoading ? t("creatingCheckout") : t("creemContinue")}
           </button>
           <button
             onClick={onClose}
-            disabled={isSubmitting}
-            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-white/15 text-sm font-medium text-white/70 transition hover:border-white/30 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isLoading}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-white/15 text-sm font-medium text-white/70 transition hover:border-white/30 hover:bg-white/5"
           >
-            {t("gumroadCancel")}
+            {t("creemCancel")}
           </button>
         </div>
       </div>
@@ -174,12 +111,9 @@ function FeatureRow({ included, text }: { included: boolean; text: string }) {
 
 export default function PricingPage() {
   const { t } = useI18n();
-  const [isYearly, setIsYearly] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [showActivationModal, setShowActivationModal] = useState(false);
-  const [licenseKey, setLicenseKey] = useState("");
-  const [activationError, setActivationError] = useState("");
-  const [isActivating, setIsActivating] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
   const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
@@ -189,34 +123,29 @@ export default function PricingPage() {
       .catch(() => setIsPro(false));
   }, []);
 
-  async function activateLicense() {
-    const trimmedKey = licenseKey.trim();
-    if (!trimmedKey) {
-      setActivationError(t("licenseKeyRequired"));
-      return;
-    }
-
-    setIsActivating(true);
-    setActivationError("");
+  async function startCheckout() {
+    setIsCreatingCheckout(true);
+    setCheckoutError("");
 
     try {
-      const res = await fetch("/api/gumroad/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ licenseKey: trimmedKey }),
-      });
-      const data = await res.json();
+      const res = await fetch("/api/creem/checkout", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
 
-      if (data.success) {
-        window.location.href = "/review";
+      if (res.status === 401) {
+        window.location.href = "/auth/signin";
         return;
       }
 
-      setActivationError(data.error || t("licenseActivationFailed"));
+      if (typeof data.checkoutUrl === "string") {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      setCheckoutError(data.error || t("checkoutFailed"));
     } catch {
-      setActivationError(t("licenseVerificationFailed"));
+      setCheckoutError(t("checkoutFailed"));
     } finally {
-      setIsActivating(false);
+      setIsCreatingCheckout(false);
     }
   }
 
@@ -240,7 +169,7 @@ export default function PricingPage() {
     },
     {
       name: t("proPlan"),
-      price: isYearly ? t("proPriceYearly") : t("proPrice"),
+      price: t("proPrice"),
       desc: t("proDesc"),
       futurePrice: t("futurePrice"),
       badge: t("launchSpecialBadge"),
@@ -252,10 +181,9 @@ export default function PricingPage() {
         { text: t("proTeamDash"), included: true },
         { text: t("proApi"), included: true },
       ],
-      cta: isYearly ? t("lockInYearly") : t("upgradeToPro"),
-      ctaHref: "gumroad",
+      cta: t("upgradeToPro"),
+      ctaHref: "creem",
       highlighted: true,
-      billingToggle: true,
     },
     {
       name: t("teamPlan"),
@@ -310,23 +238,6 @@ export default function PricingPage() {
         </h1>
         <p className="mt-2 text-white/40">{t("pricingSubtitle")}</p>
 
-        {/* Billing toggle */}
-        <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.02] px-2 py-1.5">
-          <button
-            onClick={() => setIsYearly(false)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${!isYearly ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"}`}
-          >
-            {t("monthly")}
-          </button>
-          <button
-            onClick={() => setIsYearly(true)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${isYearly ? "bg-neon/20 text-neon" : "text-white/40 hover:text-white/60"}`}
-          >
-            {t("yearly")}
-            <span className="ml-1.5 rounded bg-neon/10 px-1.5 py-0.5 text-[10px] text-neon">{t("yearlySave")}</span>
-          </button>
-        </div>
-
         <div className="mt-8 grid w-full max-w-5xl gap-5 sm:grid-cols-3">
           {plans.map((plan) => (
             <div
@@ -371,9 +282,12 @@ export default function PricingPage() {
                 <div className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg border border-neon/25 bg-neon/10 text-sm font-semibold text-neon">
                   {t("currentPlan")}
                 </div>
-              ) : plan.ctaHref === "gumroad" ? (
+              ) : plan.ctaHref === "creem" ? (
                 <button
-                  onClick={() => setShowModal(true)}
+                  onClick={() => {
+                    setCheckoutError("");
+                    setShowModal(true);
+                  }}
                   className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
                     plan.highlighted
                       ? "bg-neon text-[#050505] hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
@@ -395,31 +309,6 @@ export default function PricingPage() {
                 </Link>
               )}
 
-              {/* Secondary CTA for Pro yearly */}
-              {plan.highlighted && !isPro && !isYearly && (
-                <p className="mt-3 text-center text-xs text-white/30">
-                  Or{" "}
-                  <button
-                    onClick={() => setIsYearly(true)}
-                    className="text-neon hover:underline"
-                  >
-                    $79/year
-                  </button>{" "}
-                  — {t("yearlySave")}
-                </p>
-              )}
-
-              {plan.highlighted && !isPro && (
-                <button
-                  onClick={() => {
-                    setActivationError("");
-                    setShowActivationModal(true);
-                  }}
-                  className="mt-3 text-center text-xs font-medium text-white/45 transition hover:text-neon"
-                >
-                  {t("activatePurchasedLicense")}
-                </button>
-              )}
             </div>
           ))}
         </div>
@@ -439,31 +328,12 @@ export default function PricingPage() {
           <p className="mt-1 text-xs text-white/30">{t("refundDesc")}</p>
         </div>
 
-        {/* Gumroad redirect modal */}
-        <GumroadRedirectModal
+        <CreemRedirectModal
           open={showModal}
           onClose={() => setShowModal(false)}
-          onContinue={() => {
-            const url = isYearly
-              ? process.env.NEXT_PUBLIC_GUMROAD_YEARLY_URL || "[GUMROAD_YEARLY_URL]"
-              : process.env.NEXT_PUBLIC_GUMROAD_MONTHLY_URL || "[GUMROAD_MONTHLY_URL]";
-            window.open(url, "_blank");
-            setShowModal(false);
-            setActivationError("");
-            setShowActivationModal(true);
-          }}
-        />
-
-        <LicenseActivationModal
-          open={showActivationModal}
-          licenseKey={licenseKey}
-          error={activationError}
-          isSubmitting={isActivating}
-          onChange={setLicenseKey}
-          onClose={() => {
-            if (!isActivating) setShowActivationModal(false);
-          }}
-          onSubmit={activateLicense}
+          onContinue={startCheckout}
+          isLoading={isCreatingCheckout}
+          error={checkoutError}
         />
 
         {/* Trust badges */}

@@ -70,7 +70,7 @@ export default function RefundPage() {
                 <a href="mailto:support@checkaicode.com" className="text-neon underline underline-offset-4 hover:text-neon/80">
                   support@checkaicode.com
                 </a>{" "}
-                with your Gumroad order ID or license key. We will process your request within 2 business days.
+                with the email address used for purchase and any Creem receipt or order details you have. We will process your request within 2 business days.
               </p>
             </section>
 
