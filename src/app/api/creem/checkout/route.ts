@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { CREEM_PRODUCT_ID, getAppUrl } from "@/lib/creem";
+import { CREEM_API_BASE_URL, CREEM_PRODUCT_ID, getAppUrl } from "@/lib/creem";
 
 export const runtime = "nodejs";
 
@@ -17,7 +17,7 @@ export async function POST() {
   }
 
   const appUrl = getAppUrl();
-  const response = await fetch("https://api.creem.io/v1/checkouts", {
+  const response = await fetch(`${CREEM_API_BASE_URL}/v1/checkouts`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
