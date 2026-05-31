@@ -47,6 +47,9 @@ function CreemRedirectModal({
         <p className="mt-4 text-sm text-white/40 italic">
           {t("creemNoAccount")}
         </p>
+        <p className="mt-2 text-xs text-white/35">
+          {t("creemTaxIdNote")}
+        </p>
 
         {error && (
           <p className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
