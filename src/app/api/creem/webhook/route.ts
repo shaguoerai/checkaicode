@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 type JsonObject = Record<string, unknown>;
 
 function asObject(value: unknown): JsonObject {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonObject) : {};
 }
 
 function getString(value: unknown) {
@@ -16,7 +16,17 @@ function getString(value: unknown) {
 
 function resolveProductId(object: JsonObject) {
   const product = asObject(object.product);
-  return getString(product.id) || getString(object.product);
+  const order = asObject(object.order);
+  const subscription = asObject(object.subscription);
+  const subscriptionProduct = asObject(subscription.product);
+
+  return (
+    getString(product.id) ||
+    getString(object.product) ||
+    getString(order.product) ||
+    getString(subscriptionProduct.id) ||
+    getString(subscription.product)
+  );
 }
 
 function resolveCustomer(object: JsonObject) {
@@ -24,7 +34,14 @@ function resolveCustomer(object: JsonObject) {
 }
 
 function resolveMetadata(object: JsonObject) {
-  return asObject(object.metadata);
+  const subscription = asObject(object.subscription);
+  const metadata = asObject(object.metadata);
+  return Object.keys(metadata).length > 0 ? metadata : asObject(subscription.metadata);
+}
+
+function resolveSubscriptionId(object: JsonObject) {
+  const subscription = asObject(object.subscription);
+  return getString(subscription.id) || getString(object.id);
 }
 
 async function findUser(object: JsonObject) {
@@ -32,9 +49,15 @@ async function findUser(object: JsonObject) {
   const metadata = resolveMetadata(object);
   const userId = getString(metadata.userId) || getString(object.request_id);
   const email = getString(customer.email) || getString(metadata.email);
+  const subscriptionId = resolveSubscriptionId(object);
 
   if (userId) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user) return user;
+  }
+
+  if (subscriptionId) {
+    const user = await prisma.user.findFirst({ where: { creemSubscriptionId: subscriptionId } });
     if (user) return user;
   }
 
@@ -93,7 +116,7 @@ async function grantAccess(object: JsonObject) {
       role: "pro",
       creemCustomerId: getString(customer.id) || user.creemCustomerId,
       creemProductId: productId,
-      creemSubscriptionId: getString(object.id) || user.creemSubscriptionId,
+      creemSubscriptionId: resolveSubscriptionId(object) || user.creemSubscriptionId,
       creemCurrentPeriodEnd: periodEnd,
     },
   });
@@ -116,6 +139,13 @@ async function preserveUntilPeriodEnd(object: JsonObject) {
   });
 }
 
+async function revokeAccess(object: JsonObject) {
+  const user = await findUser(object);
+  if (!user) return;
+
+  await downgradeIfNoOtherActivePlan(user.id);
+}
+
 export async function POST(req: Request) {
   const payload = await req.text();
   const webhookSecret = process.env.CREEM_WEBHOOK_SECRET || "";
@@ -136,6 +166,7 @@ export async function POST(req: Request) {
   console.log(`[creem-webhook] event=${eventType} product=${resolveProductId(object)}`);
 
   switch (eventType) {
+    case "checkout.completed":
     case "subscription.paid":
     case "subscription.active":
       await grantAccess(object);
@@ -151,11 +182,15 @@ export async function POST(req: Request) {
       if (user) await downgradeIfNoOtherActivePlan(user.id);
       break;
     }
-    case "checkout.completed":
     case "subscription.update":
     case "subscription.updated":
+      if (getString(object.status) === "active") {
+        await grantAccess(object);
+      }
+      break;
     case "refund.created":
     case "dispute.created":
+      await revokeAccess(object);
       break;
     default:
       console.log(`[creem-webhook] unhandled event=${eventType}`);
