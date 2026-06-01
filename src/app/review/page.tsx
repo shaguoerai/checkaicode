@@ -277,6 +277,7 @@ export default function ReviewPage() {
   const [isPro, setIsPro] = useState(false);
   const [sessionUser, setSessionUser] = useState<{ name?: string | null; email?: string | null; image?: string | null } | null>(null);
   const [usage, setUsage] = useState<{ count: number; limit: number; isPro: boolean } | null>(null);
+  const [checkoutStatus, setCheckoutStatus] = useState<"idle" | "checking" | "active" | "pending">("idle");
 
   /* Fetch session + usage on mount */
   useEffect(() => {
@@ -298,16 +299,49 @@ export default function ReviewPage() {
 
   /* Refresh usage helper */
   const refreshUsage = useCallback(() => {
-    fetch("/api/user", { credentials: "same-origin" })
+    return fetch("/api/user", { credentials: "same-origin" })
       .then(r => r.json())
       .then(data => {
         if (data?.usage) {
           setUsage(data.usage);
           setIsPro(data.usage.isPro ?? false);
         }
+        return data?.usage;
       })
-      .catch(() => {});
+      .catch(() => null);
   }, []);
+
+  useEffect(() => {
+    const checkoutSucceeded = new URLSearchParams(window.location.search).get("checkout") === "success";
+    if (!checkoutSucceeded) return;
+
+    let cancelled = false;
+    let attempts = 0;
+
+    async function checkActivation() {
+      attempts += 1;
+      setCheckoutStatus("checking");
+      const latestUsage = await refreshUsage();
+      if (cancelled) return;
+
+      if (latestUsage?.isPro) {
+        setCheckoutStatus("active");
+        return;
+      }
+
+      if (attempts >= 6) {
+        setCheckoutStatus("pending");
+        return;
+      }
+
+      window.setTimeout(checkActivation, 2500);
+    }
+
+    checkActivation();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshUsage]);
 
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
@@ -533,6 +567,41 @@ export default function ReviewPage() {
           <h1 className="text-2xl font-bold text-white">{t("reviewTitle")}</h1>
           <p className="mt-1 text-white/40">{t("reviewSubtitle")}</p>
         </div>
+
+        {checkoutStatus !== "idle" && (
+          <div
+            className={`mb-4 rounded-xl border px-4 py-3 ${
+              checkoutStatus === "active"
+                ? "border-neon/20 bg-neon/10"
+                : checkoutStatus === "pending"
+                  ? "border-amber-500/20 bg-amber-500/10"
+                  : "border-white/10 bg-white/[0.03]"
+            }`}
+          >
+            <p
+              className={`text-sm font-semibold ${
+                checkoutStatus === "active"
+                  ? "text-neon"
+                  : checkoutStatus === "pending"
+                    ? "text-amber-300"
+                    : "text-white/80"
+              }`}
+            >
+              {checkoutStatus === "active"
+                ? t("checkoutProActiveTitle")
+                : checkoutStatus === "pending"
+                  ? t("checkoutProPendingTitle")
+                  : t("checkoutProCheckingTitle")}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-white/50">
+              {checkoutStatus === "active"
+                ? t("checkoutProActiveBody")
+                : checkoutStatus === "pending"
+                  ? t("checkoutProPendingBody")
+                  : t("checkoutProCheckingBody")}
+            </p>
+          </div>
+        )}
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
           {/* Editor */}
