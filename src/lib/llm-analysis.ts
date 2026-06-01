@@ -22,6 +22,7 @@ interface LLMIssue {
   codeSnippet?: string;
   referenceUrl?: string;
   aiGenerated?: boolean;
+  source?: "llm";
   falsePositive?: boolean;
 }
 
@@ -273,6 +274,7 @@ export async function runLLMAnalysis(
       codeSnippet: undefined,
       referenceUrl: undefined,
       aiGenerated: true,
+      source: "llm" as const,
     }));
 
   return { issues: llmIssues, modelUsed };

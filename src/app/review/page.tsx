@@ -879,6 +879,15 @@ export default function ReviewPage() {
                                   ? `-${issue.endLine}`
                                   : ""}{" "}
                                 · {issue.ruleId}
+                                <span
+                                  className={`ml-2 rounded px-1.5 py-0.5 font-sans text-[10px] ${
+                                    issue.aiGenerated || issue.source === "llm"
+                                      ? "bg-neon/10 text-neon"
+                                      : "bg-white/5 text-white/35"
+                                  }`}
+                                >
+                                  {issue.aiGenerated || issue.source === "llm" ? "AI enhanced" : "Static"}
+                                </span>
                               </p>
                               <CodeSnippet code={issue.codeSnippet} line={issue.line} highlightLine={issue.line} />
                               <FixSection

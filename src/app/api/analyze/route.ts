@@ -127,6 +127,8 @@ interface ScanIssue {
   fixCode?: string;
   referenceUrl?: string;
   codeSnippet?: string;
+  aiGenerated?: boolean;
+  source?: "static" | "llm";
 }
 
     const allIssues: ScanIssue[] = [];
@@ -153,9 +155,15 @@ interface ScanIssue {
         fixCode: ri.fix_code,
         referenceUrl: ri.reference_url,
         codeSnippet: ri.code_snippet,
+        source: "static" as const,
       }));
 
-      const mergedIssues = [...ruleIssues, ...semgrepResult.issues];
+      const semgrepIssues = semgrepResult.issues.map((issue) => ({
+        ...issue,
+        source: "static" as const,
+      }));
+
+      const mergedIssues = [...ruleIssues, ...semgrepIssues];
 
       // 去重（按行号+规则ID去重，rule-engine和Semgrep可能检出同一问题）
       const seen = new Set<string>();

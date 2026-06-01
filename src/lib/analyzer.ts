@@ -29,6 +29,8 @@ export interface Issue {
   fixCode?: string;
   codeSnippet?: string;
   referenceUrl?: string;
+  aiGenerated?: boolean;
+  source?: "static" | "llm";
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
