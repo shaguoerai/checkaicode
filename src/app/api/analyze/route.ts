@@ -4,7 +4,7 @@ import { checkUsageLimit, incrementUsage } from "@/lib/usage";
 import { trackPaywallEvent } from "@/lib/paywall-tracking";
 import { analyzeCode as ruleEngineAnalyze } from "@/lib/rules/rule-engine";
 import { runSemgrep } from "@/lib/semgrep";
-import { runLLMAnalysis, LLMScanMode } from "@/lib/llm-analysis";
+import { hasLLMProvider, runLLMAnalysis, LLMScanMode } from "@/lib/llm-analysis";
 import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
@@ -172,7 +172,7 @@ interface ScanIssue {
 
       // 5. Pro 用户 + 非隐私模式 → LLM 深度分析（只对有问题代码生成修复建议）
       let llmIssues: ScanIssue[] = [];
-      if (usage.isPro && !privacyMode && deduped.length > 0) {
+      if (usage.isPro && !privacyMode && hasLLMProvider() && deduped.length > 0) {
         try {
           const llmResult = await runLLMAnalysis({
             code: file.code,
@@ -256,7 +256,7 @@ interface ScanIssue {
       isPro: usage.isPro,
       scanMode: usage.isPro ? scanMode : undefined,
       privacyMode: usage.isPro ? privacyMode : undefined,
-      llmEnabled: usage.isPro && !privacyMode,
+      llmEnabled: usage.isPro && !privacyMode && hasLLMProvider(),
       authRecovered: authFailed,
     });
   } catch (e: unknown) {
