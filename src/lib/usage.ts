@@ -29,6 +29,7 @@ export function getAnonymousUserId(req: Request): string {
 
 interface ProUser {
   role?: string;
+  trialEndsAt?: Date | null;
   stripeCurrentPeriodEnd?: Date | null;
   gumroadCurrentPeriodEnd?: Date | null;
   creemCurrentPeriodEnd?: Date | null;
@@ -37,10 +38,11 @@ interface ProUser {
 function isProUser(user: ProUser | null): boolean {
   if (!user || user.role !== "pro") return false;
   const now = new Date();
+  const trialActive = Boolean(user.trialEndsAt && user.trialEndsAt > now);
   const stripeActive = Boolean(user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now);
   const gumroadActive = Boolean(user.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now);
   const creemActive = Boolean(user.creemCurrentPeriodEnd && user.creemCurrentPeriodEnd > now);
-  return stripeActive || gumroadActive || creemActive;
+  return trialActive || stripeActive || gumroadActive || creemActive;
 }
 
 export async function checkUsageLimit(
@@ -69,6 +71,7 @@ export async function checkUsageLimit(
     where: { id: userId },
     select: {
       role: true,
+      trialEndsAt: true,
       stripeCurrentPeriodEnd: true,
       gumroadCurrentPeriodEnd: true,
       creemCurrentPeriodEnd: true,

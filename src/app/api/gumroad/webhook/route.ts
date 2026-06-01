@@ -166,12 +166,14 @@ export async function POST(req: Request) {
     case "subscription_ended": {
       if (user) {
         const now = new Date();
+        const trialActive = user.trialEndsAt && user.trialEndsAt > now;
         const stripeActive = user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
+        const creemActive = user.creemCurrentPeriodEnd && user.creemCurrentPeriodEnd > now;
         // 周期真正结束：如果无 Stripe 权益则降级
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            role: stripeActive ? "pro" : "free",
+            role: trialActive || stripeActive || creemActive ? "pro" : "free",
             gumroadSubscriptionId: null,
           },
         });

@@ -71,7 +71,7 @@ const authConfig = NextAuth({
               name: user.name,
               image: user.image,
               role: "pro",
-              gumroadCurrentPeriodEnd: trialEnd,
+              trialEndsAt: trialEnd,
             },
           });
         }
@@ -85,12 +85,12 @@ const authConfig = NextAuth({
       if (account && token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
-          select: { id: true, role: true, gumroadCurrentPeriodEnd: true },
+          select: { id: true, role: true, trialEndsAt: true },
         });
         if (dbUser) {
           token.sub = dbUser.id;
           token.role = dbUser.role;
-          token.trialEndsAt = dbUser.gumroadCurrentPeriodEnd?.toISOString() || null;
+          token.trialEndsAt = dbUser.trialEndsAt?.toISOString() || null;
         }
       }
       return token;

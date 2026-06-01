@@ -72,19 +72,21 @@ async function downgradeIfNoOtherActivePlan(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
+      trialEndsAt: true,
       stripeCurrentPeriodEnd: true,
       gumroadCurrentPeriodEnd: true,
     },
   });
 
   const now = new Date();
+  const trialActive = user?.trialEndsAt && user.trialEndsAt > now;
   const stripeActive = user?.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
   const gumroadActive = user?.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now;
 
   await prisma.user.update({
     where: { id: userId },
     data: {
-      role: stripeActive || gumroadActive ? "pro" : "free",
+      role: trialActive || stripeActive || gumroadActive ? "pro" : "free",
       creemSubscriptionId: null,
       creemCurrentPeriodEnd: null,
     },

@@ -57,6 +57,7 @@ export default function RefundPage() {
                 <li>You receive a full refund of the amount you actually paid.</li>
                 <li>Monthly Pro ($9) → refund $9.</li>
                 <li>Subscriptions are non-refundable after 7 days but can be canceled at any time to stop future charges / auto-renewal.</li>
+                <li>The $9/month launch price is kept only while your subscription remains active. If you cancel and subscribe again later, the then-current price may apply.</li>
                 <li>Refunds are processed within 5–7 business days to the original payment method.</li>
                 <li>Refunds do not apply to Team or Enterprise plans. Contact sales for custom terms.</li>
               </ul>

@@ -37,10 +37,11 @@ export async function GET(req: Request) {
   });
 
   const now = new Date();
+  const trialActive = user?.trialEndsAt && user.trialEndsAt > now;
   const stripeActive = user?.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
   const gumroadActive = user?.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now;
   const creemActive = user?.creemCurrentPeriodEnd && user.creemCurrentPeriodEnd > now;
-  const isPro = user?.role === "pro" && (stripeActive || gumroadActive || creemActive);
+  const isPro = user?.role === "pro" && (trialActive || stripeActive || gumroadActive || creemActive);
 
   return NextResponse.json({
     reviews: user?.reviews || [],
@@ -48,6 +49,7 @@ export async function GET(req: Request) {
       count: usageRecord?.count || 0,
       limit: isPro ? -1 : FREE_DAILY_LIMIT,
       isPro,
+      trialEndsAt: trialActive ? user.trialEndsAt : null,
     },
   });
 }

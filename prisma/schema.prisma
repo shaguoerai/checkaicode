@@ -43,6 +43,7 @@ model User {
   emailVerified DateTime? @map("email_verified")
   image         String?
   role          String    @default("free")
+  trialEndsAt   DateTime? @map("trial_ends_at")
   stripeCustomerId       String? @map("stripe_customer_id")
   stripeSubscriptionId   String? @map("stripe_subscription_id")
   stripePriceId          String? @map("stripe_price_id")
