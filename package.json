@@ -10,7 +10,8 @@
     "benchmark:rules": "node scripts/benchmark-rules.mjs",
     "benchmark:compare": "bash scripts/benchmark-compare.sh",
     "benchmark:pipeline": "node scripts/benchmark-static-pipeline.mjs",
-    "benchmark:export": "node scripts/export-benchmark-corpus.mjs"
+    "benchmark:export": "node scripts/export-benchmark-corpus.mjs",
+    "ops:grant-pro": "node scripts/grant-pro-entitlement.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
