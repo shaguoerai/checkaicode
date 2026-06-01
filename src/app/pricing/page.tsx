@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { AuthStatus } from "@/components/auth-status";
 
+const SALES_EMAIL = "support@checkaicode.com";
+
 function CreemRedirectModal({
   open,
   onClose,
@@ -78,6 +80,78 @@ function CreemRedirectModal({
   );
 }
 
+function ContactSalesModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  if (!open) return null;
+
+  async function copyEmail() {
+    try {
+      await navigator.clipboard.writeText(SALES_EMAIL);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-8 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-semibold text-white">{t("contactSalesTitle")}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-white/60">
+          {t("contactSalesBody")}
+        </p>
+
+        <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-white/35">
+            {t("contactSalesEmailLabel")}
+          </p>
+          <p className="mt-1 break-all text-sm font-semibold text-white">
+            {SALES_EMAIL}
+          </p>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={copyEmail}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-white/15 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/5"
+          >
+            {copied ? t("contactSalesCopied") : t("contactSalesCopy")}
+          </button>
+          <a
+            href={`mailto:${SALES_EMAIL}?subject=Check%20AI%20Code%20Team%20Plan`}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-neon text-sm font-semibold text-[#050505] transition hover:bg-neon-dim hover:shadow-[0_0_20px_rgba(126,231,135,0.25)]"
+          >
+            {t("contactSalesOpenEmail")}
+          </a>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg text-sm font-medium text-white/45 transition hover:bg-white/5 hover:text-white/70"
+        >
+          {t("creemCancel")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LangToggle() {
   const { lang, setLang, t } = useI18n();
   return (
@@ -117,6 +191,7 @@ export default function PricingPage() {
   const [showModal, setShowModal] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
+  const [showContactSales, setShowContactSales] = useState(false);
   const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
@@ -201,7 +276,7 @@ export default function PricingPage() {
         { text: t("teamSla"), included: true },
       ],
       cta: t("contactSales"),
-      ctaHref: "mailto:support@checkaicode.com?subject=Check%20AI%20Code%20Team%20Plan",
+      ctaHref: "contact-sales",
       highlighted: false,
     },
   ];
@@ -299,6 +374,14 @@ export default function PricingPage() {
                 >
                   {plan.cta}
                 </button>
+              ) : plan.ctaHref === "contact-sales" ? (
+                <button
+                  type="button"
+                  onClick={() => setShowContactSales(true)}
+                  className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg border border-white/15 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/5"
+                >
+                  {plan.cta}
+                </button>
               ) : (
                 <Link
                   href={plan.ctaHref}
@@ -337,6 +420,10 @@ export default function PricingPage() {
           onContinue={startCheckout}
           isLoading={isCreatingCheckout}
           error={checkoutError}
+        />
+        <ContactSalesModal
+          open={showContactSales}
+          onClose={() => setShowContactSales(false)}
         />
 
         {/* Trust badges */}
