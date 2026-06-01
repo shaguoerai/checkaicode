@@ -1,0 +1,228 @@
+[
+  {
+    "id": "js-async-foreach",
+    "title": "Array.forEach with async callback is not awaited",
+    "language": "javascript",
+    "code": "async function saveAll(items) {\n  items.forEach(async item => {\n    await save(item);\n  });\n  return true;\n}",
+    "expectedPresent": ["BUG-JS-ASYNC-001"]
+  },
+  {
+    "id": "js-async-map",
+    "title": "Array.map async returns Promise array",
+    "language": "typescript",
+    "code": "async function load(ids: string[]) {\n  const users = ids.map(async id => getUser(id));\n  return users;\n}",
+    "expectedPresent": ["BUG-JS-ASYNC-002"]
+  },
+  {
+    "id": "js-axios-ignored",
+    "title": "axios request response is ignored",
+    "language": "javascript",
+    "code": "async function ping(url) {\n  axios.get(url);\n}",
+    "expectedPresent": ["BUG-JS-ASYNC-003"]
+  },
+  {
+    "id": "react-async-effect",
+    "title": "React useEffect receives async callback",
+    "language": "javascript",
+    "code": "function Widget() {\n  useEffect(async () => {\n    const data = await fetchData();\n    setData(data);\n  }, []);\n}",
+    "expectedPresent": ["BUG-REACT-001"]
+  },
+  {
+    "id": "js-parseint-radix",
+    "title": "parseInt without radix",
+    "language": "javascript",
+    "code": "const page = parseInt(req.query.page);",
+    "expectedPresent": ["BUG-JS-NUMBER-001"]
+  },
+  {
+    "id": "js-fetch-floating",
+    "title": "fetch result is ignored",
+    "language": "javascript",
+    "code": "function fire(url) {\n  fetch(url);\n}",
+    "expectedPresent": ["SEM-015"]
+  },
+  {
+    "id": "js-array-sort-default",
+    "title": "Numeric array sort without comparator",
+    "language": "javascript",
+    "code": "const nums = [10, 2, 1];\nnums.sort();",
+    "expectedPresent": ["SEM-025"]
+  },
+  {
+    "id": "js-innerhtml-xss",
+    "title": "innerHTML assignment can enable XSS",
+    "language": "javascript",
+    "code": "function render(input) {\n  document.querySelector('#out').innerHTML = input;\n}",
+    "expectedPresent": ["SEC-XSS-001"]
+  },
+  {
+    "id": "js-open-redirect",
+    "title": "location.href with user input can redirect offsite",
+    "language": "javascript",
+    "code": "function go(next) {\n  location.href = next;\n}",
+    "expectedPresent": ["SEC-REDIR-001"]
+  },
+  {
+    "id": "js-settimeout-string",
+    "title": "setTimeout with string executes code",
+    "language": "javascript",
+    "code": "setTimeout(\"doDangerousThing()\", 1000);",
+    "expectedPresent": ["SEM-019"]
+  },
+  {
+    "id": "js-python-method-confusion",
+    "title": "Python string method used in JavaScript",
+    "language": "javascript",
+    "code": "const name = 'Ada';\nconst upper = name.upper();",
+    "expectedPresent": ["CROSSLANG-UPPER"]
+  },
+  {
+    "id": "python-js-method-confusion",
+    "title": "JavaScript string method used in Python",
+    "language": "python",
+    "code": "name = 'Ada'\nprint(name.toUpperCase())",
+    "expectedPresent": ["CROSSLANG-TOUPPERCASE"]
+  },
+  {
+    "id": "python-mutable-default",
+    "title": "Mutable default argument leaks state",
+    "language": "python",
+    "code": "def add_item(item, items=[]):\n    items.append(item)\n    return items",
+    "expectedPresent": ["BUG-PY-DEFAULT-001"]
+  },
+  {
+    "id": "python-bare-except",
+    "title": "Bare except catches too much",
+    "language": "python",
+    "code": "try:\n    parse_user(data)\nexcept:\n    return None",
+    "expectedPresent": ["BUG-PY-EXCEPT-001"]
+  },
+  {
+    "id": "python-requests-timeout",
+    "title": "requests call without timeout can hang",
+    "language": "python",
+    "code": "import requests\nresponse = requests.get(url)\nreturn response.json()",
+    "expectedPresent": ["BUG-PY-NET-001"]
+  },
+  {
+    "id": "python-assert-production",
+    "title": "assert used for production validation",
+    "language": "python",
+    "code": "def transfer(amount):\n    assert amount > 0\n    send(amount)",
+    "expectedPresent": ["BUG-PY-ASSERT-001"]
+  },
+  {
+    "id": "python-os-system",
+    "title": "os.system can lead to command injection",
+    "language": "python",
+    "code": "import os\ndef list_dir(path):\n    os.system('ls ' + path)",
+    "expectedPresent": ["SEC-CMD-001"]
+  },
+  {
+    "id": "python-subprocess-shell",
+    "title": "subprocess shell=True can lead to command injection",
+    "language": "python",
+    "code": "subprocess.run('cat ' + filename, shell=True)",
+    "expectedPresent": ["SEC-CMD-002"]
+  },
+  {
+    "id": "python-sql-fstring",
+    "title": "SQL query built with f-string",
+    "language": "python",
+    "code": "cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")",
+    "expectedPresent": ["SEC-SQL-002"]
+  },
+  {
+    "id": "python-yaml-load",
+    "title": "yaml.load can deserialize unsafe objects",
+    "language": "python",
+    "code": "config = yaml.load(raw)",
+    "expectedPresent": ["SEC-DSER-002"]
+  },
+  {
+    "id": "python-pickle-load",
+    "title": "pickle.load on untrusted input",
+    "language": "python",
+    "code": "obj = pickle.load(open(path, 'rb'))",
+    "expectedPresent": ["SEC-DSER-001"]
+  },
+  {
+    "id": "python-django-debug",
+    "title": "Django DEBUG enabled",
+    "language": "python",
+    "code": "DEBUG = True",
+    "expectedPresent": ["SEC-DEBUG-002"]
+  },
+  {
+    "id": "python-flask-debug",
+    "title": "Flask debug mode enabled",
+    "language": "python",
+    "code": "app.run(host='0.0.0.0', debug=True)",
+    "expectedPresent": ["SEC-DEBUG-001"]
+  },
+  {
+    "id": "secret-github-token",
+    "title": "Hardcoded GitHub token",
+    "language": "javascript",
+    "code": "const token = 'ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';",
+    "expectedPresent": ["SEC-KEY-002"]
+  },
+  {
+    "id": "secret-generic-config",
+    "title": "Hardcoded credential-like config value",
+    "language": "javascript",
+    "code": "const config = {\n  api_key: 'abc123456789secret'\n};",
+    "expectedPresent": ["SEC-KEY-CONFIG"]
+  },
+  {
+    "id": "openai-old-chatcompletion",
+    "title": "Old OpenAI Python SDK ChatCompletion API",
+    "language": "python",
+    "code": "response = openai.ChatCompletion.create(model='gpt-4', messages=[])",
+    "expectedPresent": ["VERSION-001"]
+  },
+  {
+    "id": "langchain-old-openai-import",
+    "title": "Deprecated LangChain OpenAI import",
+    "language": "python",
+    "code": "llm = langchain.llms.OpenAI()",
+    "expectedPresent": ["VERSION-003"]
+  },
+  {
+    "id": "react-component-will-mount",
+    "title": "React componentWillMount deprecated",
+    "language": "javascript",
+    "code": "class App extends React.Component {\n  componentWillMount() {\n    this.load();\n  }\n}",
+    "expectedPresent": ["DEPRECATED-REACT-001"]
+  },
+  {
+    "id": "django-url-deprecated",
+    "title": "Django url import removed in modern Django",
+    "language": "python",
+    "code": "from django.conf.urls import url\nurlpatterns = [url(r'^home/$', views.home)]",
+    "expectedPresent": ["DEPRECATED-DJANGO-002", "DEPRECATED-DJANGO-001"]
+  },
+  {
+    "id": "spring-security-adapter",
+    "title": "Spring WebSecurityConfigurerAdapter deprecated",
+    "language": "java",
+    "code": "public class SecurityConfig extends WebSecurityConfigurerAdapter {\n}",
+    "expectedPresent": ["DEPRECATED-SPRING-003"]
+  },
+  {
+    "id": "negative-requests-timeout",
+    "title": "requests call with timeout should not trigger no-timeout rule",
+    "language": "python",
+    "code": "response = requests.get(url, timeout=10)",
+    "expectedPresent": [],
+    "expectedAbsent": ["BUG-PY-NET-001", "SEM-004"]
+  },
+  {
+    "id": "negative-parseint-radix",
+    "title": "parseInt with radix should not trigger radix rule",
+    "language": "javascript",
+    "code": "const page = parseInt(req.query.page, 10);",
+    "expectedPresent": [],
+    "expectedAbsent": ["BUG-JS-NUMBER-001"]
+  }
+]

@@ -304,7 +304,7 @@ const DEPRECATED_APIS: {
 
   // Django (3 rules)
   {
-    pattern: /django\.conf\.urls\.url\s*\(/,
+    pattern: /django\.conf\.urls\.url\s*\(|\burlpatterns\s*=\s*\[[^\n]*\burl\s*\(/,
     id: "DEPRECATED-DJANGO-001",
     frameworks: ["django"],
     title: "Django: django.conf.urls.url 已废弃",
