@@ -4,7 +4,9 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-white/5 px-6 py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-white/30 sm:flex-row">
-        <span>Check AI Code</span>
+        <Link href="/" className="transition hover:text-white/60">
+          Check AI Code
+        </Link>
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2" aria-label="Legal and support links">
           <Link href="/guide" className="transition hover:text-white/60">
             Guide

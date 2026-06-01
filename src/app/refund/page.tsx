@@ -90,9 +90,9 @@ export default function RefundPage() {
       {/* Footer */}
       <footer className="border-t border-white/10 px-6 py-6">
         <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 sm:flex-row">
-          <p className="text-sm text-white/30">
+          <Link href="/" className="text-sm text-white/30 transition hover:text-white/60">
             © {new Date().getFullYear()} Check AI Code
-          </p>
+          </Link>
           <div className="flex items-center gap-4 text-sm text-white/40">
             <Link href="/privacy" className="transition hover:text-white">Privacy</Link>
             <Link href="/terms" className="transition hover:text-white">Terms</Link>
