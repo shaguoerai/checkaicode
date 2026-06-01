@@ -132,6 +132,7 @@ async function callOpenAI(
         { role: "system", content: "You are a precise code security reviewer. Output only valid JSON." },
         { role: "user", content: prompt },
       ],
+      thinking: { type: "disabled" },
       temperature: 0.2,
       max_tokens: mode === "deep" ? 4096 : 2048,
     }),
