@@ -180,17 +180,21 @@ function getTypeColor(type: string): string {
 function CodeSnippet({ code, line, endLine: _endLine, highlightLine }: { code?: string; line?: number; endLine?: number; highlightLine?: number }) {
   if (!code?.trim()) return null;
   const lines = code.split("\n");
-  const start = Math.max(0, (highlightLine || line || 1) - 3);
+  const targetLine = highlightLine || line || 1;
+  let start = Math.max(0, targetLine - 3);
+  if (start >= lines.length) start = 0;
   const end = Math.min(lines.length, start + 7);
   const display = lines.slice(start, end);
+  if (!display.some((l) => l.trim())) return null;
+  const lineOffset = start === 0 && targetLine > lines.length ? targetLine - 1 : start;
 
   return (
     <div className="mt-3 rounded-lg bg-[#0a0a0a] border border-white/5 overflow-hidden">
       <pre className="font-mono text-xs leading-relaxed p-3 overflow-x-auto">
         <code>
           {display.map((l, i) => {
-            const ln = start + i + 1;
-            const isHighlight = ln === (highlightLine || line);
+            const ln = lineOffset + i + 1;
+            const isHighlight = ln === targetLine;
             return (
               <div key={i} className={`flex ${isHighlight ? "bg-white/5" : ""}`}>
                 <span className="w-8 shrink-0 text-right pr-2 text-white/20 select-none">{ln}</span>
