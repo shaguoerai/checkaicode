@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import { useEffect, useRef } from "react";
 import { AuthStatus } from "@/components/auth-status";
+import { SiteFooter } from "@/components/site-footer";
 
 function LangToggle() {
   const { lang, setLang, t } = useI18n();
@@ -323,16 +324,7 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Footer */}
-          <footer className="px-6 py-8 border-t border-white/5">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/30">
-              <span>Check AI Code</span>
-              <div className="flex gap-6">
-                <Link href="/privacy" className="hover:text-white/60 transition">Privacy</Link>
-                <Link href="/terms" className="hover:text-white/60 transition">Terms</Link>
-              </div>
-            </div>
-          </footer>
+          <SiteFooter />
         </main>
       </div>
     </div>

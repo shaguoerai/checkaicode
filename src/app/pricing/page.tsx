@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { AuthStatus } from "@/components/auth-status";
+import { SiteFooter } from "@/components/site-footer";
 
 const SALES_EMAIL = "support@checkaicode.com";
 
@@ -452,6 +453,7 @@ export default function PricingPage() {
           </div>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }
