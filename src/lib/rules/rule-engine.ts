@@ -111,6 +111,23 @@ function looksLikeSecretAssignment(line: string): boolean {
   return true;
 }
 
+function normalizeLanguage(language: string, code: string): string {
+  const normalized = language.toLowerCase();
+  if (["js", "jsx"].includes(normalized)) return "javascript";
+  if (["ts", "tsx"].includes(normalized)) return "typescript";
+  if (normalized && normalized !== "auto") return normalized;
+
+  if (/\b(function|const|let|var|import\s+.*\s+from|useEffect|=>)\b/.test(code)) return "javascript";
+  if (/^\s*(def|from\s+\w+\s+import|import\s+\w+|class\s+\w+|if\s+.+:|for\s+.+:|while\s+.+:|try\s*:|except\b)/m.test(code)) return "python";
+  return normalized || "auto";
+}
+
+function languageAliases(language: string): string[] {
+  if (language === "javascript") return ["javascript", "jsx"];
+  if (language === "typescript") return ["typescript", "tsx", "javascript", "jsx"];
+  return [language];
+}
+
 const HALLUCINATED_PACKAGES: Record<string, string> = {
   "pandas_ai": "pandas-ai",
   "sklearn_pandas": "sklearn-pandas",
@@ -771,7 +788,7 @@ const SEMANTIC_PATTERNS = [
     severity: "warning" as const,
   },
   {
-    pattern: /\.get\([^)]+\)(?!\s*\|\|)/,
+    pattern: /\b(dict|data|payload|params|config|settings|record|row|obj)\.get\([^)]+\)(?!\s*(\|\||or\b))/,
     id: "SEM-004",
     title: "字典 get() 返回值未处理",
     description: "dict.get() 可能返回 None，后续操作可能引发 AttributeError。",
@@ -859,7 +876,7 @@ const SEMANTIC_PATTERNS = [
     severity: "info" as const,
   },
   {
-    pattern: /fetch\s*\([^)]+\)(?!\s*\.then)/,
+    pattern: /^\s*fetch\s*\([^)]+\)\s*;?\s*$/,
     id: "SEM-015",
     title: "fetch 未处理响应",
     description: "fetch 返回 Promise，必须处理响应或错误，否则请求结果丢失。",
@@ -945,6 +962,120 @@ const SEMANTIC_PATTERNS = [
     description: "[10, 2].sort() 返回 [10, 2] 而非 [2, 10]，因为默认按字符串比较。",
     fix_suggestion: "Pass a comparator: .sort((a, b) => a - b) for numbers — default sort is alphabetical",
     severity: "warning" as const,
+  },
+];
+
+const PRACTICAL_BUG_PATTERNS: {
+  pattern: RegExp;
+  id: string;
+  languages: string[];
+  type: Issue["type"];
+  severity: Issue["severity"];
+  title: string;
+  description: string;
+  fix_suggestion: string;
+  fix_code?: string;
+  reference_url?: string;
+}[] = [
+  {
+    pattern: /\.forEach\s*\(\s*async\b/,
+    id: "BUG-JS-ASYNC-001",
+    languages: ["javascript", "typescript", "tsx", "jsx"],
+    type: "semantic_error",
+    severity: "warning",
+    title: "async callback inside forEach is not awaited",
+    description: "Array.forEach does not wait for async callbacks. Errors can become unhandled and later code may run before the async work finishes.",
+    fix_suggestion: "Use for...of with await for sequential work, or await Promise.all(items.map(async item => ...)) for parallel work.",
+    fix_code: "for (const item of items) {\n  await doWork(item);\n}\n\n// or\nawait Promise.all(items.map((item) => doWork(item)));",
+  },
+  {
+    pattern: /\.map\s*\(\s*async\b/,
+    id: "BUG-JS-ASYNC-002",
+    languages: ["javascript", "typescript", "tsx", "jsx"],
+    type: "semantic_error",
+    severity: "warning",
+    title: "async map returns an array of Promises",
+    description: "Array.map with an async callback returns Promise[]; forgetting Promise.all often means the work is never awaited.",
+    fix_suggestion: "Wrap the async map in Promise.all, or use for...of if the operations must be sequential.",
+    fix_code: "const results = await Promise.all(items.map(async (item) => {\n  return doWork(item);\n}));",
+  },
+  {
+    pattern: /^\s*axios\.(get|post|put|patch|delete)\s*\([^)]+\)\s*;?\s*$/,
+    id: "BUG-JS-ASYNC-003",
+    languages: ["javascript", "typescript", "tsx", "jsx"],
+    type: "semantic_error",
+    severity: "warning",
+    title: "axios request result is ignored",
+    description: "An axios call returns a Promise. If it is not awaited or chained, request failures may be unhandled and the response is lost.",
+    fix_suggestion: "Use await inside async functions, or return/chain the Promise with .then() and .catch().",
+    fix_code: "const response = await axios.get(url);",
+  },
+  {
+    pattern: /useEffect\s*\(\s*async\b/,
+    id: "BUG-REACT-001",
+    languages: ["javascript", "typescript", "tsx", "jsx"],
+    type: "semantic_error",
+    severity: "warning",
+    title: "async function passed directly to useEffect",
+    description: "React expects the effect callback to return nothing or a cleanup function, not a Promise. Passing an async callback can break cleanup behavior.",
+    fix_suggestion: "Define and call an inner async function inside useEffect instead of making the effect callback async.",
+    fix_code: "useEffect(() => {\n  let cancelled = false;\n  async function load() {\n    const data = await fetchData();\n    if (!cancelled) setData(data);\n  }\n  load();\n  return () => { cancelled = true; };\n}, []);",
+    reference_url: "https://react.dev/reference/react/useEffect",
+  },
+  {
+    pattern: /\bparseInt\s*\([^,\n)]+\)/,
+    id: "BUG-JS-NUMBER-001",
+    languages: ["javascript", "typescript", "tsx", "jsx"],
+    type: "semantic_error",
+    severity: "info",
+    title: "parseInt without explicit radix",
+    description: "parseInt without a radix can be ambiguous and is easy to misread during reviews.",
+    fix_suggestion: "Pass an explicit radix, usually 10: parseInt(value, 10).",
+    fix_code: "const n = parseInt(value, 10);",
+  },
+  {
+    pattern: /^\s*def\s+\w+\s*\([^)]*=\s*(\[\]|\{\}|set\(\))/,
+    id: "BUG-PY-DEFAULT-001",
+    languages: ["python"],
+    type: "semantic_error",
+    severity: "warning",
+    title: "Mutable default argument",
+    description: "Mutable default arguments are created once at function definition time and shared across calls, causing state leakage between calls.",
+    fix_suggestion: "Use None as the default, then create a new list/dict/set inside the function.",
+    fix_code: "def add_item(item, items=None):\n    if items is None:\n        items = []\n    items.append(item)\n    return items",
+  },
+  {
+    pattern: /^\s*except\s*:\s*$/,
+    id: "BUG-PY-EXCEPT-001",
+    languages: ["python"],
+    type: "semantic_error",
+    severity: "warning",
+    title: "Bare except catches too much",
+    description: "A bare except catches BaseException, including KeyboardInterrupt and SystemExit, and can hide serious failures.",
+    fix_suggestion: "Catch a specific exception type, or use except Exception as exc and log the error.",
+    fix_code: "except ValueError as exc:\n    logger.exception(\"Invalid input\")",
+  },
+  {
+    pattern: /\brequests\.(get|post|put|patch|delete)\s*\((?![^)]*\btimeout\s*=)/,
+    id: "BUG-PY-NET-001",
+    languages: ["python"],
+    type: "semantic_error",
+    severity: "warning",
+    title: "requests call without timeout",
+    description: "HTTP calls without a timeout can hang indefinitely and exhaust workers or background jobs.",
+    fix_suggestion: "Pass a timeout, for example timeout=10 or a tuple timeout=(3.05, 10).",
+    fix_code: "response = requests.get(url, timeout=10)",
+  },
+  {
+    pattern: /^\s*assert\s+.+/,
+    id: "BUG-PY-ASSERT-001",
+    languages: ["python"],
+    type: "best_practice",
+    severity: "info",
+    title: "assert can be disabled in optimized Python",
+    description: "Python removes assert statements when running with -O, so asserts should not enforce production input validation or security checks.",
+    fix_suggestion: "Use explicit validation and raise a real exception for production invariants.",
+    fix_code: "if not condition:\n    raise ValueError(\"Invalid input\")",
   },
 ];
 
@@ -1102,6 +1233,38 @@ function detectSemanticIssues(code: string, lines: string[]): Issue[] {
   return issues;
 }
 
+function detectPracticalBugs(_code: string, lines: string[], language: string): Issue[] {
+  const issues: Issue[] = [];
+  const activeLanguages = languageAliases(language.toLowerCase());
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    for (const rule of PRACTICAL_BUG_PATTERNS) {
+      if (!rule.languages.some((lang) => activeLanguages.includes(lang))) continue;
+      if (rule.pattern.test(line)) {
+        issues.push(
+          makeIssue(
+            {
+              id: rule.id,
+              type: rule.type,
+              severity: rule.severity,
+              title: rule.title,
+              description: rule.description,
+              fix_suggestion: rule.fix_suggestion,
+              fix_code: rule.fix_code,
+              reference_url: rule.reference_url,
+            },
+            i + 1,
+            line.trim()
+          )
+        );
+      }
+    }
+  }
+
+  return issues;
+}
+
 // ── CodeSlick P0: Cross-language method confusion detector ──
 function detectCrossLangMethods(code: string, lines: string[], language: string): Issue[] {
   const issues: Issue[] = [];
@@ -1162,6 +1325,7 @@ function detectDeprecatedApis(code: string, lines: string[], _language: string):
 
 export function analyzeCode(code: string, language: string): { score: number; issues: Issue[]; summary: string } {
   const lines = code.split("\n");
+  const normalizedLanguage = normalizeLanguage(language, code);
   const allIssues: Issue[] = [];
 
   allIssues.push(...detectHallucinatedPackages(code, lines));
@@ -1169,8 +1333,9 @@ export function analyzeCode(code: string, language: string): { score: number; is
   allIssues.push(...detectVersionMismatches(code, lines));
   allIssues.push(...detectSecurityIssues(code, lines));
   allIssues.push(...detectSemanticIssues(code, lines));
-  allIssues.push(...detectCrossLangMethods(code, lines, language));
-  allIssues.push(...detectDeprecatedApis(code, lines, language));
+  allIssues.push(...detectPracticalBugs(code, lines, normalizedLanguage));
+  allIssues.push(...detectCrossLangMethods(code, lines, normalizedLanguage));
+  allIssues.push(...detectDeprecatedApis(code, lines, normalizedLanguage));
 
   // Deduplicate by (line, title)
   const seen = new Set<string>();
