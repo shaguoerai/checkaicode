@@ -28,15 +28,14 @@ export function getAnonymousUserId(req: Request): string {
 }
 
 interface ProUser {
-  role?: string;
   trialEndsAt?: Date | null;
   stripeCurrentPeriodEnd?: Date | null;
   gumroadCurrentPeriodEnd?: Date | null;
   creemCurrentPeriodEnd?: Date | null;
 }
 
-function isProUser(user: ProUser | null): boolean {
-  if (!user || user.role !== "pro") return false;
+export function hasActiveProEntitlement(user: ProUser | null): boolean {
+  if (!user) return false;
   const now = new Date();
   const trialActive = Boolean(user.trialEndsAt && user.trialEndsAt > now);
   const stripeActive = Boolean(user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now);
@@ -78,7 +77,7 @@ export async function checkUsageLimit(
     },
   });
 
-  const isPro = isProUser(user);
+  const isPro = hasActiveProEntitlement(user);
 
   if (isPro) {
     return { allowed: true, remaining: -1, isPro: true };

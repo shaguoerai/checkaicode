@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ANON_DAILY_LIMIT, FREE_DAILY_LIMIT, getAnonymousUserId } from "@/lib/usage";
+import {
+  ANON_DAILY_LIMIT,
+  FREE_DAILY_LIMIT,
+  getAnonymousUserId,
+  hasActiveProEntitlement,
+} from "@/lib/usage";
 
 export const runtime = "nodejs";
 
@@ -38,10 +43,7 @@ export async function GET(req: Request) {
 
   const now = new Date();
   const trialActive = user?.trialEndsAt && user.trialEndsAt > now;
-  const stripeActive = user?.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > now;
-  const gumroadActive = user?.gumroadCurrentPeriodEnd && user.gumroadCurrentPeriodEnd > now;
-  const creemActive = user?.creemCurrentPeriodEnd && user.creemCurrentPeriodEnd > now;
-  const isPro = user?.role === "pro" && (trialActive || stripeActive || gumroadActive || creemActive);
+  const isPro = hasActiveProEntitlement(user);
 
   return NextResponse.json({
     reviews: user?.reviews || [],
