@@ -40,6 +40,7 @@ interface LLMAnalysisOutput {
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const LLM_TIMEOUT_MS = 15000;
 
 const MODEL_CONFIG = {
   standard: {
@@ -133,7 +134,7 @@ async function callOpenAI(
       temperature: 0.2,
       max_tokens: mode === "deep" ? 4096 : 2048,
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -170,7 +171,7 @@ async function callDeepSeek(
       temperature: 0.2,
       max_tokens: mode === "deep" ? 4096 : 2048,
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
 
   if (!res.ok) {

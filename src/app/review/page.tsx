@@ -178,7 +178,7 @@ function getTypeColor(type: string): string {
 
 /* Code snippet with line numbers */
 function CodeSnippet({ code, line, endLine: _endLine, highlightLine }: { code?: string; line?: number; endLine?: number; highlightLine?: number }) {
-  if (!code) return null;
+  if (!code?.trim()) return null;
   const lines = code.split("\n");
   const start = Math.max(0, (highlightLine || line || 1) - 3);
   const end = Math.min(lines.length, start + 7);
