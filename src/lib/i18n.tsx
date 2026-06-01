@@ -16,6 +16,7 @@ const dict: Record<Lang, Record<string, string>> = {
   en: {
     // Nav
     signIn: "Sign In",
+    why: "Why",
     guide: "Guide",
     feedback: "Feedback",
     feedbackTitle: "Send feedback",
@@ -176,6 +177,7 @@ const dict: Record<Lang, Record<string, string>> = {
   zh: {
     // Nav
     signIn: "登录",
+    why: "为什么",
     guide: "使用指南",
     feedback: "反馈",
     feedbackTitle: "发送反馈",

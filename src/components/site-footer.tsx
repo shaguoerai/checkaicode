@@ -8,6 +8,9 @@ export function SiteFooter() {
           Check AI Code
         </Link>
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2" aria-label="Legal and support links">
+          <Link href="/why" className="transition hover:text-white/60">
+            Why
+          </Link>
           <Link href="/guide" className="transition hover:text-white/60">
             Guide
           </Link>

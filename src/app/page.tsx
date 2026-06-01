@@ -159,6 +159,9 @@ export default function Home() {
             <span className="text-lg font-semibold text-white tracking-tight">Check AI Code</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/why" className="text-sm text-white/60 transition hover:text-white">
+              {t("why")}
+            </Link>
             <Link href="/guide" className="text-sm text-white/60 transition hover:text-white">
               {t("guide")}
             </Link>
