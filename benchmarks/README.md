@@ -42,6 +42,21 @@ The latest static pipeline report is written to:
 /tmp/checkaicode-benchmark-reports/static-pipeline.latest.md
 ```
 
+To export the same benchmark samples as real source files for external scanners,
+run:
+
+```bash
+npm run benchmark:export
+```
+
+By default this writes to:
+
+```bash
+/tmp/checkaicode-benchmark-corpus
+```
+
+Override the destination with `BENCHMARK_CORPUS_DIR`.
+
 The benchmark checks the local rule engine against known bug/security samples in
 `benchmarks/known-bugs.json`. Each sample declares rules that must be present and,
 for selected negative cases, rules that must be absent.
@@ -78,6 +93,7 @@ Before broad public promotion, extend this set toward 50+ samples and compare:
 - Check AI Code static pipeline result
 - Check AI Code full `/api/analyze` result for a small quota-safe smoke subset
 - Live `POST /api/semgrep` provider result
+- Exported file corpus for CodeQL/Sonar/Snyk scans
 - CodeQL where local setup is available
 - Sonar/Snyk only where account and CLI access are available
 
