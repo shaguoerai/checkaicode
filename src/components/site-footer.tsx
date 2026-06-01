@@ -6,6 +6,9 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-white/30 sm:flex-row">
         <span>Check AI Code</span>
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2" aria-label="Legal and support links">
+          <Link href="/guide" className="transition hover:text-white/60">
+            Guide
+          </Link>
           <Link href="/privacy" className="transition hover:text-white/60">
             Privacy
           </Link>

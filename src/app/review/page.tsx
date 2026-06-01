@@ -500,6 +500,9 @@ export default function ReviewPage() {
           </Link>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-3">
+          <Link href="/guide" className="text-sm text-white/60 transition hover:text-white">
+            {t("guide")}
+          </Link>
           <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition">
             {t("viewPricing")}
           </Link>
