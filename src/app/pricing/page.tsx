@@ -283,6 +283,7 @@ export default function PricingPage() {
         { text: t("proAdvanced"), included: true },
         { text: t("proCustomRules"), included: true },
         { text: t("proPriority"), included: true },
+        { text: t("proTeamDash"), included: true },
         { text: t("proApi"), included: true },
       ],
       cta: t("upgradeAnnual"),
