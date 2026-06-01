@@ -426,7 +426,7 @@ const VERSION_MISMATCHES = [
     reference_url: "https://keras.io/getting_started/",
   },
   {
-    pattern: /sklearn\./,
+    pattern: /\bimport\s+sklearn\b|\bfrom\s+sklearn\s+import\b|sklearn\./,
     id: "VERSION-005",
     title: "scikit-learn 包名错误",
     description: "sklearn 是导入别名，实际包名为 scikit-learn。",
@@ -924,7 +924,7 @@ const SEMANTIC_PATTERNS = [
     severity: "critical" as const,
   },
   {
-    pattern: /\.catch\s*\(\s*\)\s*\{/,
+    pattern: /\.catch\s*\(\s*(?:\(\s*\)\s*=>\s*\{\s*\}|function\s*\([^)]*\)\s*\{\s*\}|)\s*\)/,
     id: "SEM-021",
     title: "空的 catch 块",
     description: "catch 块为空，静默吞掉错误，调试困难。",
@@ -1181,7 +1181,6 @@ function detectSecurityIssues(code: string, lines: string[]): Issue[] {
           maskSecretSnippet(line.trim())
         )
       );
-      continue;
     }
 
     for (const rule of SECURITY_PATTERNS) {

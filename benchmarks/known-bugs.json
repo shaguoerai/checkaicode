@@ -224,5 +224,146 @@
     "code": "const page = parseInt(req.query.page, 10);",
     "expectedPresent": [],
     "expectedAbsent": ["BUG-JS-NUMBER-001"]
+  },
+  {
+    "id": "secret-aws-key",
+    "title": "Hardcoded AWS access key id",
+    "language": "python",
+    "code": "AWS_ACCESS_KEY_ID = 'AKIA1234567890ABCDEF'",
+    "expectedPresent": ["SEC-KEY-001"]
+  },
+  {
+    "id": "secret-jwt-token",
+    "title": "Hardcoded JWT token",
+    "language": "javascript",
+    "code": "const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signature';",
+    "expectedPresent": ["SEC-KEY-010"]
+  },
+  {
+    "id": "secret-pem-private-key",
+    "title": "Embedded private key material",
+    "language": "python",
+    "code": "PRIVATE_KEY = '''-----BEGIN RSA PRIVATE KEY-----\\nabc\\n-----END RSA PRIVATE KEY-----'''",
+    "expectedPresent": ["SEC-KEY-009", "SEC-KEY-012"]
+  },
+  {
+    "id": "python-md5-hash",
+    "title": "MD5 used for security-sensitive hashing",
+    "language": "python",
+    "code": "digest = hashlib.md5(password.encode()).hexdigest()",
+    "expectedPresent": ["SEC-CRYPTO-001"]
+  },
+  {
+    "id": "python-sha1-hash",
+    "title": "SHA-1 used for hashing",
+    "language": "python",
+    "code": "digest = hashlib.sha1(data).hexdigest()",
+    "expectedPresent": ["SEC-CRYPTO-002"]
+  },
+  {
+    "id": "python-mktemp",
+    "title": "tempfile.mktemp is race-prone",
+    "language": "python",
+    "code": "name = tempfile.mktemp()",
+    "expectedPresent": ["SEC-PATH-002"]
+  },
+  {
+    "id": "python-jsonpickle",
+    "title": "jsonpickle.decode on untrusted input",
+    "language": "python",
+    "code": "obj = jsonpickle.decode(raw)",
+    "expectedPresent": ["SEC-DSER-003"]
+  },
+  {
+    "id": "node-env-development",
+    "title": "Production code sets NODE_ENV to development",
+    "language": "javascript",
+    "code": "const NODE_ENV = 'development';",
+    "expectedPresent": ["SEC-DEBUG-003"]
+  },
+  {
+    "id": "cors-wildcard",
+    "title": "CORS wildcard allows any origin",
+    "language": "javascript",
+    "code": "res.setHeader('Access-Control-Allow-Origin', '*');",
+    "expectedPresent": ["SEC-DEBUG-004"]
+  },
+  {
+    "id": "python-sql-concat",
+    "title": "SQL query built with string concatenation",
+    "language": "python",
+    "code": "cursor.execute('SELECT * FROM users WHERE id = ' + user_id)",
+    "expectedPresent": ["SEC-SQL-001"]
+  },
+  {
+    "id": "js-document-write",
+    "title": "document.write used in frontend",
+    "language": "javascript",
+    "code": "document.write(userHtml);",
+    "expectedPresent": ["SEC-XSS-002", "SEM-017"]
+  },
+  {
+    "id": "js-queryselector-null",
+    "title": "querySelector result is used without null check",
+    "language": "javascript",
+    "code": "document.querySelector('#email').value = form.email;",
+    "expectedPresent": ["SEM-018"]
+  },
+  {
+    "id": "js-empty-catch",
+    "title": "Promise catch swallows error",
+    "language": "javascript",
+    "code": "fetch(url).catch(() => {});",
+    "expectedPresent": ["SEM-021"]
+  },
+  {
+    "id": "js-new-array",
+    "title": "new Array(length) creates empty slots",
+    "language": "javascript",
+    "code": "const arr = new Array(3);",
+    "expectedPresent": ["SEM-024"]
+  },
+  {
+    "id": "version-sklearn",
+    "title": "sklearn package naming mismatch",
+    "language": "python",
+    "code": "import sklearn",
+    "expectedPresent": ["VERSION-005"]
+  },
+  {
+    "id": "vue-extend-deprecated",
+    "title": "Vue.extend no longer recommended in Vue 3",
+    "language": "javascript",
+    "code": "Vue.extend({ data() { return { count: 1 } } })",
+    "expectedPresent": ["DEPRECATED-VUE-001"]
+  },
+  {
+    "id": "vue-set-not-needed",
+    "title": "this.$set not needed in Vue 3",
+    "language": "javascript",
+    "code": "this.$set(state, 'ready', true)",
+    "expectedPresent": ["DEPRECATED-VUE-002"]
+  },
+  {
+    "id": "flask-ext-import",
+    "title": "flask.ext import style is deprecated",
+    "language": "python",
+    "code": "from flask.ext.sqlalchemy import SQLAlchemy",
+    "expectedPresent": ["DEPRECATED-FLASK-001"]
+  },
+  {
+    "id": "spring-requestmapping",
+    "title": "Spring RequestMapping should prefer verb-specific annotation",
+    "language": "java",
+    "code": "@RequestMapping(\"/users\")\npublic class UserController {}",
+    "expectedPresent": ["DEPRECATED-SPRING-001"]
+  },
+  {
+    "id": "negative-node-env-production",
+    "title": "NODE_ENV production should not trigger development rule",
+    "language": "javascript",
+    "code": "const NODE_ENV = 'production';",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEC-DEBUG-003"]
   }
 ]

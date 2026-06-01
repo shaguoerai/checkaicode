@@ -14,8 +14,8 @@ for selected negative cases, rules that must be absent.
 
 Current baseline:
 
-- 32 samples
-- 32/32 passing after `112980b` and `2422bed`
+- 52 samples
+- 52/52 passing after `112980b`, `2422bed`, and follow-up rule/fixture expansion
 - Coverage focus:
   - JavaScript/TypeScript async misuse
   - React effect misuse
