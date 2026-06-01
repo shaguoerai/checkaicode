@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { CREEM_API_BASE_URL, CREEM_PRODUCT_ID, getAppUrl } from "@/lib/creem";
+import {
+  CREEM_API_BASE_URL,
+  CreemBillingPeriod,
+  getAppUrl,
+  getCreemProductId,
+} from "@/lib/creem";
 
 export const runtime = "nodejs";
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await auth();
 
   if (!session?.user?.id || !session.user.email) {
@@ -16,6 +21,14 @@ export async function POST() {
     return NextResponse.json({ error: "Creem is not configured" }, { status: 500 });
   }
 
+  const body = await req.json().catch(() => ({}));
+  const period: CreemBillingPeriod = body?.period === "annual" ? "annual" : "monthly";
+  const productId = getCreemProductId(period);
+
+  if (!productId) {
+    return NextResponse.json({ error: "Annual checkout is not configured yet" }, { status: 500 });
+  }
+
   const appUrl = getAppUrl();
   const response = await fetch(`${CREEM_API_BASE_URL}/v1/checkouts`, {
     method: "POST",
@@ -24,8 +37,8 @@ export async function POST() {
       "x-api-key": apiKey,
     },
     body: JSON.stringify({
-      product_id: CREEM_PRODUCT_ID,
-      request_id: session.user.id,
+      product_id: productId,
+      request_id: `${session.user.id}:${period}`,
       units: 1,
       success_url: `${appUrl}/review?checkout=success`,
       customer: {
@@ -34,6 +47,7 @@ export async function POST() {
       metadata: {
         userId: session.user.id,
         email: session.user.email,
+        period,
       },
     }),
   });

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { CREEM_PRODUCT_ID, parseDateOrFallback, verifyCreemSignature } from "@/lib/creem";
+import {
+  isAnnualCreemProduct,
+  isKnownCreemProduct,
+  parseDateOrFallback,
+  verifyCreemSignature,
+} from "@/lib/creem";
 
 export const runtime = "nodejs";
 
@@ -47,7 +52,8 @@ function resolveSubscriptionId(object: JsonObject) {
 async function findUser(object: JsonObject) {
   const customer = resolveCustomer(object);
   const metadata = resolveMetadata(object);
-  const userId = getString(metadata.userId) || getString(object.request_id);
+  const rawRequestId = getString(object.request_id);
+  const userId = getString(metadata.userId) || rawRequestId.split(":")[0];
   const email = getString(customer.email) || getString(metadata.email);
   const subscriptionId = resolveSubscriptionId(object);
 
@@ -95,7 +101,7 @@ async function downgradeIfNoOtherActivePlan(userId: string) {
 
 async function grantAccess(object: JsonObject) {
   const productId = resolveProductId(object);
-  if (productId !== CREEM_PRODUCT_ID) {
+  if (!isKnownCreemProduct(productId)) {
     console.log(`[creem-webhook] ignoring product=${productId}`);
     return;
   }
@@ -107,9 +113,10 @@ async function grantAccess(object: JsonObject) {
   }
 
   const customer = resolveCustomer(object);
+  const fallbackDays = isAnnualCreemProduct(productId) ? 370 : 32;
   const periodEnd = parseDateOrFallback(
     object.current_period_end_date || object.current_period_end,
-    32
+    fallbackDays
   );
 
   await prisma.user.update({
@@ -127,6 +134,7 @@ async function grantAccess(object: JsonObject) {
 async function preserveUntilPeriodEnd(object: JsonObject) {
   const user = await findUser(object);
   if (!user) return;
+  const productId = resolveProductId(object);
 
   await prisma.user.update({
     where: { id: user.id },
@@ -135,7 +143,10 @@ async function preserveUntilPeriodEnd(object: JsonObject) {
       creemCurrentPeriodEnd:
         typeof object.current_period_end_date === "string" ||
         typeof object.current_period_end === "string"
-          ? parseDateOrFallback(object.current_period_end_date || object.current_period_end, 32)
+          ? parseDateOrFallback(
+              object.current_period_end_date || object.current_period_end,
+              isAnnualCreemProduct(productId) ? 370 : 32
+            )
           : user.creemCurrentPeriodEnd,
     },
   });

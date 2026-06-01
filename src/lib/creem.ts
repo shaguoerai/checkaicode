@@ -1,11 +1,27 @@
 import crypto from "crypto";
 
 export const CREEM_PRODUCT_ID = process.env.CREEM_PRODUCT_ID || "prod_21ucscjxbwrU6k7ZRkAVcR";
+export const CREEM_ANNUAL_PRODUCT_ID = process.env.CREEM_ANNUAL_PRODUCT_ID || "";
 export const CREEM_API_BASE_URL =
   (process.env.CREEM_API_BASE_URL || "https://api.creem.io").replace(/\/$/, "");
 export const CREEM_PAYMENT_LINK =
   process.env.NEXT_PUBLIC_CREEM_PAYMENT_LINK ||
   "https://www.creem.io/payment/prod_21ucscjxbwrU6k7ZRkAVcR";
+export const CREEM_ANNUAL_PAYMENT_LINK = process.env.NEXT_PUBLIC_CREEM_ANNUAL_PAYMENT_LINK || "";
+
+export type CreemBillingPeriod = "monthly" | "annual";
+
+export function getCreemProductId(period: CreemBillingPeriod) {
+  return period === "annual" ? CREEM_ANNUAL_PRODUCT_ID : CREEM_PRODUCT_ID;
+}
+
+export function isKnownCreemProduct(productId: string) {
+  return productId === CREEM_PRODUCT_ID || Boolean(CREEM_ANNUAL_PRODUCT_ID && productId === CREEM_ANNUAL_PRODUCT_ID);
+}
+
+export function isAnnualCreemProduct(productId: string) {
+  return Boolean(CREEM_ANNUAL_PRODUCT_ID && productId === CREEM_ANNUAL_PRODUCT_ID);
+}
 
 export function getAppUrl() {
   const configured = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;

@@ -14,12 +14,14 @@ function CreemRedirectModal({
   onContinue,
   isLoading,
   error,
+  period,
 }: {
   open: boolean;
   onClose: () => void;
   onContinue: () => void;
   isLoading: boolean;
   error: string;
+  period: "monthly" | "annual";
 }) {
   const { t } = useI18n();
   if (!open) return null;
@@ -43,7 +45,7 @@ function CreemRedirectModal({
 
         <ol className="mt-3 ml-4 list-decimal text-sm text-white/60 space-y-1">
           <li>{t("creemStep1")}</li>
-          <li>{t("creemStep2")}</li>
+          <li>{period === "annual" ? t("creemStep2Annual") : t("creemStep2Monthly")}</li>
           <li>{t("creemStep3")}</li>
         </ol>
 
@@ -194,6 +196,7 @@ export default function PricingPage() {
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [checkoutPeriod, setCheckoutPeriod] = useState<"monthly" | "annual">("monthly");
 
   useEffect(() => {
     fetch("/api/user", { credentials: "same-origin" })
@@ -207,7 +210,11 @@ export default function PricingPage() {
     setCheckoutError("");
 
     try {
-      const res = await fetch("/api/creem/checkout", { method: "POST" });
+      const res = await fetch("/api/creem/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ period: checkoutPeriod }),
+      });
       const data = await res.json().catch(() => ({}));
 
       if (res.status === 401) {
@@ -260,9 +267,27 @@ export default function PricingPage() {
         { text: t("proTeamDash"), included: true },
         { text: t("proApi"), included: true },
       ],
-      cta: t("upgradeToPro"),
-      ctaHref: "creem",
+      cta: t("upgradeMonthly"),
+      ctaHref: "creem-monthly",
       highlighted: true,
+    },
+    {
+      name: t("annualPlan"),
+      price: t("annualPrice"),
+      desc: t("annualDesc"),
+      futurePrice: t("futureAnnualPrice"),
+      badge: t("annualBadge"),
+      features: [
+        { text: t("annualSave"), included: true },
+        { text: t("proUnlimited"), included: true },
+        { text: t("proAdvanced"), included: true },
+        { text: t("proCustomRules"), included: true },
+        { text: t("proPriority"), included: true },
+        { text: t("proApi"), included: true },
+      ],
+      cta: t("upgradeAnnual"),
+      ctaHref: "creem-annual",
+      highlighted: false,
     },
     {
       name: t("teamPlan"),
@@ -332,7 +357,7 @@ export default function PricingPage() {
           <span>{t("launchLockHighlight")}</span>
         </div>
 
-        <div className="mt-8 grid w-full max-w-5xl gap-5 sm:grid-cols-3">
+        <div className="mt-8 grid w-full max-w-6xl gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => (
             <div
               key={plan.name}
@@ -342,9 +367,11 @@ export default function PricingPage() {
                   : "border border-white/8 bg-white/[0.02]"
               }`}
             >
-              {plan.highlighted && plan.badge && (
+              {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-neon px-3 py-1 text-xs font-semibold text-[#050505]">
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    plan.highlighted ? "bg-neon text-[#050505]" : "bg-white text-[#050505]"
+                  }`}>
                     {plan.badge}
                   </span>
                 </div>
@@ -381,10 +408,11 @@ export default function PricingPage() {
                 <div className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg border border-neon/25 bg-neon/10 text-sm font-semibold text-neon">
                   {t("currentPlan")}
                 </div>
-              ) : plan.ctaHref === "creem" ? (
+              ) : plan.ctaHref === "creem-monthly" || plan.ctaHref === "creem-annual" ? (
                 <button
                   onClick={() => {
                     setCheckoutError("");
+                    setCheckoutPeriod(plan.ctaHref === "creem-annual" ? "annual" : "monthly");
                     setShowModal(true);
                   }}
                   className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
@@ -446,6 +474,7 @@ export default function PricingPage() {
           onContinue={startCheckout}
           isLoading={isCreatingCheckout}
           error={checkoutError}
+          period={checkoutPeriod}
         />
         <ContactSalesModal
           open={showContactSales}

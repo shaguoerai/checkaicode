@@ -47,7 +47,7 @@ export default function RefundPage() {
             <section>
               <h2 className="text-xl font-semibold text-white">7-Day Satisfaction Guarantee</h2>
               <p className="mt-3 leading-relaxed">
-                All new monthly Pro subscriptions are eligible for a full refund within 7 days of the initial purchase.
+                All new monthly and annual Pro subscriptions are eligible for a full refund within 7 days of the initial purchase.
               </p>
             </section>
 
@@ -56,8 +56,9 @@ export default function RefundPage() {
               <ul className="mt-3 list-disc space-y-2 pl-5">
                 <li>You receive a full refund of the amount you actually paid.</li>
                 <li>Monthly Pro ($9) → refund $9.</li>
+                <li>Annual Pro ($79) → refund $79.</li>
                 <li>Subscriptions are non-refundable after 7 days but can be canceled at any time to stop future charges / auto-renewal.</li>
-                <li>If you subscribe during the launch period, the $9/month launch price is kept only while your subscription remains active. If you cancel and subscribe again later, the then-current price may apply.</li>
+                <li>If you subscribe monthly during the launch period, the $9/month launch price is kept only while your subscription remains active. If you cancel and subscribe again later, the then-current price may apply. Annual Pro is currently $79/year, with a potential future annual price of $149/year.</li>
                 <li>Refunds are processed within 5–7 business days to the original payment method.</li>
                 <li>Refunds do not apply to Team or Enterprise plans. Contact sales for custom terms.</li>
               </ul>
