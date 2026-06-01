@@ -133,6 +133,10 @@ interface ScanIssue {
 
     const allIssues: ScanIssue[] = [];
     let totalScore = 0;
+    let llmAttempted = false;
+    let llmGenerated = 0;
+    let llmModelUsed: string | undefined;
+    let llmError: string | undefined;
     const fileResults: { filename: string; score: number; issues: ScanIssue[]; summary: string }[] = [];
 
     for (const file of files) {
@@ -181,6 +185,7 @@ interface ScanIssue {
       // 5. Pro 用户 + 非隐私模式 → LLM 深度分析（只对有问题代码生成修复建议）
       let llmIssues: ScanIssue[] = [];
       if (usage.isPro && !privacyMode && hasLLMProvider() && deduped.length > 0) {
+        llmAttempted = true;
         try {
           const llmResult = await runLLMAnalysis({
             code: file.code,
@@ -189,8 +194,12 @@ interface ScanIssue {
             mode: scanMode,
           });
           llmIssues = llmResult.issues;
+          llmGenerated += llmResult.issues.length;
+          if (llmResult.modelUsed) llmModelUsed = llmResult.modelUsed;
+          if (llmResult.error) llmError = llmResult.error;
         } catch (llmErr) {
           console.error("LLM analysis error (non-blocking):", llmErr);
+          llmError = llmErr instanceof Error ? llmErr.message : String(llmErr);
           // LLM 故障不阻断整体扫描，静默降级为规则引擎结果
         }
       }
@@ -265,6 +274,26 @@ interface ScanIssue {
       scanMode: usage.isPro ? scanMode : undefined,
       privacyMode: usage.isPro ? privacyMode : undefined,
       llmEnabled: usage.isPro && !privacyMode && hasLLMProvider(),
+      llmStatus: usage.isPro
+        ? {
+            enabled: !privacyMode && hasLLMProvider(),
+            attempted: llmAttempted,
+            generated: llmGenerated,
+            model: llmModelUsed,
+            error: llmError,
+            reason: privacyMode
+              ? "privacy_mode"
+              : !hasLLMProvider()
+                ? "no_provider"
+                : allIssues.length === 0
+                  ? "no_static_issues"
+                  : llmAttempted && llmGenerated === 0
+                    ? "fallback_static"
+                    : llmGenerated > 0
+                      ? "enhanced"
+                      : "not_attempted",
+          }
+        : undefined,
       authRecovered: authFailed,
     });
   } catch (e: unknown) {

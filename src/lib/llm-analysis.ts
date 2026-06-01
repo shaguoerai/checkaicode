@@ -232,9 +232,10 @@ export async function runLLMAnalysis(
       if (result) modelUsed = result.model;
     } catch (deepseekErr) {
       console.error("DeepSeek fallback also failed:", deepseekErr);
+      const detail = deepseekErr instanceof Error ? deepseekErr.message : String(deepseekErr);
       return {
         issues: [],
-        error: "AI analysis temporarily unavailable. Showing rule-engine results only.",
+        error: `AI analysis temporarily unavailable. Showing rule-engine results only. ${detail.slice(0, 160)}`,
       };
     }
   }

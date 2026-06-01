@@ -261,12 +261,22 @@ interface FileResult {
   issues: Issue[];
 }
 
+interface LLMStatus {
+  enabled: boolean;
+  attempted: boolean;
+  generated: number;
+  model?: string;
+  error?: string;
+  reason?: string;
+}
+
 export default function ReviewPage() {
   const { lang, t } = useI18n();
   const [tabs, setTabs] = useState<FileTab[]>([{ id: generateId(), filename: "input", code: "", language: "auto" }]);
   const [activeTabId, setActiveTabId] = useState<string>(tabs[0].id);
   const [issues, setIssues] = useState<Issue[] | null>(null);
   const [fileResults, setFileResults] = useState<FileResult[] | null>(null);
+  const [llmStatus, setLlmStatus] = useState<LLMStatus | null>(null);
   const [summary, setSummary] = useState("");
   const [score, setScore] = useState(100);
   const [loading, setLoading] = useState(false);
@@ -437,6 +447,7 @@ export default function ReviewPage() {
     setLoading(true);
     setIssues(null);
     setFileResults(null);
+    setLlmStatus(null);
     setSummary("");
     setError("");
     try {
@@ -466,6 +477,7 @@ export default function ReviewPage() {
       if (data.issues) {
         setIssues(data.issues);
         setFileResults(data.fileResults || null);
+        setLlmStatus((data.llmStatus as unknown as LLMStatus) || null);
         setSummary(data.summary || "");
         setScore(data.score ?? 100);
         setIsPro(data.isPro ?? false);
@@ -771,6 +783,22 @@ export default function ReviewPage() {
                   </h2>
                   {summary && (
                     <p className="mt-0.5 text-xs text-white/40">{summary}</p>
+                  )}
+                  {llmStatus && (
+                    <p className="mt-1 text-[11px] text-white/35">
+                      AI enhancement:{" "}
+                      {llmStatus.generated > 0
+                        ? `generated ${llmStatus.generated} enhanced finding${llmStatus.generated === 1 ? "" : "s"}${llmStatus.model ? ` with ${llmStatus.model}` : ""}`
+                        : llmStatus.reason === "fallback_static"
+                          ? "fallback to static results"
+                          : llmStatus.reason === "privacy_mode"
+                            ? "skipped by Privacy Mode"
+                            : llmStatus.reason === "no_static_issues"
+                              ? "not needed"
+                              : llmStatus.enabled
+                                ? "enabled, no enhanced findings"
+                                : "not enabled"}
+                    </p>
                   )}
                 </div>
                 {/* Export buttons */}
