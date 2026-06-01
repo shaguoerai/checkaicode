@@ -322,6 +322,12 @@ export default function PricingPage() {
           {t("pricingTitle")}
         </h1>
         <p className="mt-2 text-white/40">{t("pricingSubtitle")}</p>
+        <div className="mt-4 inline-flex max-w-2xl items-start gap-2 rounded-xl border border-neon/20 bg-neon/5 px-4 py-2 text-left text-sm font-medium leading-relaxed text-neon sm:items-center sm:rounded-full">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>{t("launchLockHighlight")}</span>
+        </div>
 
         <div className="mt-8 grid w-full max-w-5xl gap-5 sm:grid-cols-3">
           {plans.map((plan) => (
@@ -356,6 +362,11 @@ export default function PricingPage() {
                 <p className="mt-1 text-xs text-white/30">{plan.futurePrice}</p>
               )}
               <p className="mt-1 text-sm text-white/40">{plan.desc}</p>
+              {plan.highlighted && (
+                <p className="mt-2 text-sm font-semibold leading-relaxed text-neon">
+                  {t("proLockLine")}
+                </p>
+              )}
 
               <div className="mt-5 flex-1">
                 {plan.features.map((f, i) => (
@@ -407,10 +418,15 @@ export default function PricingPage() {
         </div>
 
         {/* Pro trial note */}
-        <div className="mt-8 max-w-2xl rounded-xl border border-white/8 bg-white/[0.02] px-6 py-4">
-          <p className="text-sm text-white/50">
-            <span className="text-neon">*</span>{" "}
-            <strong className="text-white/70">{t("proExperienceDayTitle")}</strong>{" "}
+        <div className="mt-8 flex max-w-2xl items-start gap-3 rounded-xl border border-neon/15 bg-neon/[0.03] px-6 py-4">
+          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neon/10 text-neon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+          </div>
+          <p className="text-sm leading-relaxed text-white/50">
+            <strong className="font-semibold text-neon">{t("proExperienceDayTitle")}</strong>{" "}
             {t("proExperienceDay")}
           </p>
         </div>
