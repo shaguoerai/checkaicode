@@ -5,9 +5,11 @@ import { prisma } from "@/lib/prisma";
 
 const providers = [];
 
-const googleClientId = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
+const cleanEnv = (value: string | undefined) => value?.trim();
+
+const googleClientId = cleanEnv(process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID);
 const googleClientSecret =
-  process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+  cleanEnv(process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET);
 
 if (googleClientId && googleClientSecret) {
   providers.push(
@@ -33,9 +35,9 @@ if (googleClientId && googleClientSecret) {
   );
 }
 
-const githubClientId = process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID;
+const githubClientId = cleanEnv(process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID);
 const githubClientSecret =
-  process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET;
+  cleanEnv(process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET);
 
 if (githubClientId && githubClientSecret) {
   providers.push(
