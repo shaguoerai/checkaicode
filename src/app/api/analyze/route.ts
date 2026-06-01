@@ -204,16 +204,32 @@ interface ScanIssue {
         }
       }
 
-      // 合并 LLM 结果（LLM 只补充/增强，不独立判断）
-      const finalIssues = [...deduped, ...llmIssues];
-      // 二次去重：LLM 可能对同一行给出建议，保留 LLM 增强版
-      const finalSeen = new Set<string>();
-      const finalDeduped = finalIssues.filter((issue) => {
-        const key = `${issue.line}:${issue.ruleId || issue.message?.slice(0, 30)}`;
-        if (finalSeen.has(key)) return false;
-        finalSeen.add(key);
-        return true;
-      });
+      // 合并 LLM 结果：AI 增强覆盖对应静态问题，避免把同一问题显示两遍。
+      const finalDeduped = [...deduped];
+      for (const llmIssue of llmIssues) {
+        let targetIndex = finalDeduped.findIndex(
+          (issue) => issue.line === llmIssue.line && issue.ruleId === llmIssue.ruleId
+        );
+        if (targetIndex === -1) {
+          targetIndex = finalDeduped.findIndex(
+            (issue) => issue.line === llmIssue.line && issue.source !== "llm"
+          );
+        }
+
+        if (targetIndex >= 0) {
+          finalDeduped[targetIndex] = {
+            ...finalDeduped[targetIndex],
+            severity: llmIssue.severity || finalDeduped[targetIndex].severity,
+            message: llmIssue.message || finalDeduped[targetIndex].message,
+            fixSuggestion: llmIssue.fixSuggestion || finalDeduped[targetIndex].fixSuggestion,
+            fixCode: llmIssue.fixCode || finalDeduped[targetIndex].fixCode,
+            aiGenerated: true,
+            source: "llm",
+          };
+        } else {
+          finalDeduped.push(llmIssue);
+        }
+      }
 
       // score
       let score = 100;
