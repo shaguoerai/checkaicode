@@ -503,6 +503,9 @@ export default function ReviewPage() {
           <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition">
             {t("viewPricing")}
           </Link>
+          <Link href="/feedback" className="text-sm text-white/60 transition hover:text-white">
+            {t("feedback")}
+          </Link>
           <LangToggle />
           {usage && !usage.isPro && usage.limit > 0 && (
             <span className="rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400">
@@ -656,7 +659,7 @@ export default function ReviewPage() {
                     className="h-3.5 w-3.5 rounded border-white/20 bg-white/5 text-neon focus:ring-neon/30"
                   />
                   <span className="text-xs text-white/50">
-                    Privacy Mode: Code stays local
+                    {t("privacyModeLabel")}
                   </span>
                 </label>
               </div>

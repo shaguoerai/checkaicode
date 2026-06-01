@@ -4,16 +4,16 @@ import { I18nProvider } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "CheckAICode — AI Code Review: Start Free, Pro from $9/mo",
-  description: "Start free with 3 reviews/day. Lock in Pro at $9/month (Launch Special available until June 30). Unlimited AI code reviews, advanced fixes, and team features.",
+  description: "Start free with 3 anonymous reviews/day or 5 signed-in reviews/day. Upgrade to Pro at $9/month for unlimited AI code reviews, larger inputs, deep scan mode, and privacy controls.",
   openGraph: {
-    title: "CheckAICode Pricing — Lock in $9/mo Before June 30",
-    description: "AI code review that actually catches bugs. Start free, upgrade when ready. Lock in $9/month for as long as you maintain your subscription.",
+    title: "CheckAICode Pricing — Start Free, Pro from $9/mo",
+    description: "AI code review for catching practical bugs, security risks, and AI-generated code mistakes early.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CheckAICode Pricing — Lock in $9/mo Before June 30",
-    description: "AI code review that actually catches bugs. Start free, upgrade when ready. Lock in $9/month for as long as you maintain your subscription.",
+    title: "CheckAICode Pricing — Start Free, Pro from $9/mo",
+    description: "AI code review for catching practical bugs, security risks, and AI-generated code mistakes early.",
   },
 };
 

@@ -234,7 +234,6 @@ export default function PricingPage() {
       desc: t("freeDesc"),
       features: [
         { text: t("freeReviews"), included: true },
-        { text: t("freeProDay"), included: true },
         { text: t("freeBasic"), included: true },
         { text: t("freeCommunity"), included: true },
         { text: t("freeSupport"), included: true },
@@ -249,7 +248,6 @@ export default function PricingPage() {
       name: t("proPlan"),
       price: t("proPrice"),
       desc: t("proDesc"),
-      futurePrice: t("futurePrice"),
       badge: t("launchSpecialBadge"),
       features: [
         { text: t("proUnlimited"), included: true },
@@ -299,6 +297,9 @@ export default function PricingPage() {
           <Link href="/review" className="text-sm text-white/60 hover:text-white transition">
             {t("reviewTitle")}
           </Link>
+          <Link href="/feedback" className="text-sm text-white/60 transition hover:text-white">
+            {t("feedback")}
+          </Link>
           <LangToggle />
           <AuthStatus signInLabel={t("signIn")} />
         </div>
@@ -345,9 +346,6 @@ export default function PricingPage() {
                   plan.price
                 )}
               </p>
-              {'futurePrice' in plan && plan.futurePrice && (
-                <p className="mt-1 text-xs text-white/30">{plan.futurePrice}</p>
-              )}
               <p className="mt-1 text-sm text-white/40">{plan.desc}</p>
 
               <div className="mt-5 flex-1">
@@ -399,17 +397,8 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* Pro Experience Day note */}
-        <div className="mt-8 max-w-2xl rounded-xl border border-white/8 bg-white/[0.02] px-6 py-4">
-          <p className="text-sm text-white/50">
-            <span className="text-neon">💡</span>{" "}
-            <strong className="text-white/70">{t("proExperienceDayTitle")}</strong>{" "}
-            {t("proExperienceDay")}
-          </p>
-        </div>
-
         {/* Refund guarantee */}
-        <div className="mt-6 max-w-2xl text-center">
+        <div className="mt-8 max-w-2xl text-center">
           <p className="text-sm font-medium text-white/60">{t("refundGuarantee")}</p>
           <p className="mt-1 text-xs text-white/30">{t("refundDesc")}</p>
         </div>

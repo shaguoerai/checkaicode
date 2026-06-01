@@ -47,7 +47,7 @@ export default function RefundPage() {
             <section>
               <h2 className="text-xl font-semibold text-white">7-Day Satisfaction Guarantee</h2>
               <p className="mt-3 leading-relaxed">
-                All new Pro subscriptions (monthly and annual) are eligible for a full refund within 7 days of the initial purchase.
+                All new monthly Pro subscriptions are eligible for a full refund within 7 days of the initial purchase.
               </p>
             </section>
 
@@ -55,9 +55,8 @@ export default function RefundPage() {
               <h2 className="text-xl font-semibold text-white">What You Get Back</h2>
               <ul className="mt-3 list-disc space-y-2 pl-5">
                 <li>You receive a full refund of the amount you actually paid.</li>
-                <li>Monthly ($9) → refund $9. Annual ($79) → refund $79.</li>
+                <li>Monthly Pro ($9) → refund $9.</li>
                 <li>Subscriptions are non-refundable after 7 days but can be canceled at any time to stop future charges / auto-renewal.</li>
-                <li>The Launch Special pricing is forfeited upon cancellation. Re-subscribing later will be at the then-current price.</li>
                 <li>Refunds are processed within 5–7 business days to the original payment method.</li>
                 <li>Refunds do not apply to Team or Enterprise plans. Contact sales for custom terms.</li>
               </ul>

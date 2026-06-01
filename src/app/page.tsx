@@ -161,6 +161,9 @@ export default function Home() {
             <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition">
               {t("viewPricing")}
             </Link>
+            <Link href="/feedback" className="text-sm text-white/60 transition hover:text-white">
+              {t("feedback")}
+            </Link>
             <LangToggle />
             <AuthStatus signInLabel={t("signIn")} />
           </div>
