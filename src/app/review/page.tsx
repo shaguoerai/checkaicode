@@ -790,11 +790,13 @@ export default function ReviewPage() {
                       {llmStatus.generated > 0
                         ? `generated ${llmStatus.generated} enhanced finding${llmStatus.generated === 1 ? "" : "s"}${llmStatus.model ? ` with ${llmStatus.model}` : ""}`
                         : llmStatus.reason === "fallback_static"
-                          ? "fallback to static results"
+                          ? `fallback to static results${llmStatus.error ? ` (${llmStatus.error.replace(/^AI analysis temporarily unavailable\. Showing rule-engine results only\.\s*/i, "").slice(0, 90)})` : ""}`
                           : llmStatus.reason === "privacy_mode"
                             ? "skipped by Privacy Mode"
                             : llmStatus.reason === "no_static_issues"
                               ? "not needed"
+                              : llmStatus.reason === "no_enhancements"
+                                ? "no extra enhancement returned"
                               : llmStatus.enabled
                                 ? "enabled, no enhanced findings"
                                 : "not enabled"}

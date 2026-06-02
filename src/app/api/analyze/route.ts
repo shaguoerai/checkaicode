@@ -303,8 +303,10 @@ interface ScanIssue {
                 ? "no_provider"
                 : allIssues.length === 0
                   ? "no_static_issues"
-                  : llmAttempted && llmGenerated === 0
+                  : llmError
                     ? "fallback_static"
+                    : llmAttempted && llmGenerated === 0
+                      ? "no_enhancements"
                     : llmGenerated > 0
                       ? "enhanced"
                       : "not_attempted",

@@ -42,6 +42,10 @@ interface LLMAnalysisOutput {
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const LLM_TIMEOUT_MS = 15000;
+const LLM_MAX_TOKENS: Record<LLMScanMode, number> = {
+  standard: 1024,
+  deep: 1536,
+};
 
 const MODEL_CONFIG = {
   standard: {
@@ -63,13 +67,13 @@ function buildPrompt(input: LLMAnalysisInput): string {
   const issueSummary = issues
     .map(
       (i, idx) =>
-        `${idx + 1}. [${i.severity}] Line ${i.line}: ${i.message} (rule: ${i.ruleId})`
+        `${idx + 1}. [${i.severity}] Line ${i.line}: ${i.message} (ruleId: ${i.ruleId})`
     )
     .join("\n");
 
   const modeDesc = mode === "deep"
-    ? "Thorough analysis: carefully review each issue, check for false positives, and provide detailed, production-ready fix suggestions with full code examples."
-    : "Fast analysis: provide concise, accurate fix suggestions for each confirmed issue. Skip if the issue looks like a false positive.";
+    ? "Thorough analysis: enhance each listed static finding with a clear reason and a production-ready fix. Keep the answer concise."
+    : "Fast analysis: enhance each listed static finding with a concise, accurate fix suggestion.";
 
   return `You are a senior code security reviewer. Analyze the following ${language} code and the issues already found by static analysis tools.
 
@@ -83,14 +87,12 @@ ${code.slice(0, 8000)}
 ISSUES FOUND BY STATIC ANALYSIS:
 ${issueSummary}
 
-For each issue that is NOT a false positive, provide:
+For each listed static issue, provide:
 1. line number
 2. the original ruleId exactly as provided
 3. a clear explanation of why it's a problem
 4. a concrete fix suggestion with code
 5. mark as "ai_enhanced"
-
-For issues that ARE false positives, mark them as "false_positive" and explain why.
 
 Output strictly as JSON array:
 [
@@ -108,10 +110,11 @@ Output strictly as JSON array:
 
 Rules:
 - ONLY output the JSON array, no markdown, no explanations outside JSON
+- Return one JSON object for each listed static issue whenever possible
 - Do NOT invent issues that are not in the static analysis list
 - Do NOT hallucinate APIs or functions that don't exist
-- If unsure, mark as false_positive rather than inventing a problem
-- All fix suggestions must be syntactically valid ${language} code
+- If unsure about a fix, keep the original finding and write a cautious fixSuggestion
+- Keep fixCode short; omit fixCode if a compact syntactically valid snippet is not possible
 `;
 }
 
@@ -135,7 +138,7 @@ async function callOpenAI(
         { role: "user", content: prompt },
       ],
       temperature: 0.2,
-      max_tokens: mode === "deep" ? 4096 : 2048,
+      max_tokens: LLM_MAX_TOKENS[mode],
     }),
     signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
@@ -173,7 +176,7 @@ async function callDeepSeek(
       ],
       thinking: { type: "disabled" },
       temperature: 0.2,
-      max_tokens: mode === "deep" ? 4096 : 2048,
+      max_tokens: LLM_MAX_TOKENS[mode],
     }),
     signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
