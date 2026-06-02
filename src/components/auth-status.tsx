@@ -42,11 +42,11 @@ export function AuthStatus({ signInLabel = "Sign In" }: { signInLabel?: string }
     const displayName = session.user.name || session.user.email || "Account";
 
     return (
-      <div className="relative">
+      <div className="relative min-w-0 shrink-0">
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="flex min-w-0 items-center gap-2 rounded-md border border-neon/25 bg-neon/10 px-3 py-2 text-sm font-medium text-white transition hover:border-neon/50 hover:bg-neon/15"
+          className="flex min-w-0 items-center gap-2 rounded-md border border-neon/25 bg-neon/10 px-2.5 py-2 text-sm font-medium text-white transition hover:border-neon/50 hover:bg-neon/15 sm:px-3"
           aria-expanded={open}
           aria-haspopup="menu"
         >
@@ -63,7 +63,7 @@ export function AuthStatus({ signInLabel = "Sign In" }: { signInLabel?: string }
               {displayName.slice(0, 1).toUpperCase()}
             </span>
           )}
-          <span className="max-w-36 truncate">{displayName}</span>
+          <span className="max-w-24 truncate sm:max-w-36">{displayName}</span>
           <svg
             className={`h-4 w-4 text-white/50 transition ${open ? "rotate-180" : ""}`}
             viewBox="0 0 20 20"
@@ -81,7 +81,7 @@ export function AuthStatus({ signInLabel = "Sign In" }: { signInLabel?: string }
         {open ? (
           <div
             role="menu"
-            className="absolute right-0 z-50 mt-2 w-64 rounded-lg border border-white/10 bg-[#0b0b0b] p-3 text-sm text-white shadow-2xl"
+            className="absolute right-0 z-50 mt-2 w-[min(16rem,calc(100vw-2rem))] rounded-lg border border-white/10 bg-[#0b0b0b] p-3 text-sm text-white shadow-2xl"
           >
             <div className="flex items-center gap-3 border-b border-white/10 pb-3">
               {session.user.image && !imageFailed ? (
@@ -121,7 +121,7 @@ export function AuthStatus({ signInLabel = "Sign In" }: { signInLabel?: string }
   return (
     <Link
       href="/auth/signin"
-      className="rounded-md bg-white px-4 py-2 text-sm font-medium text-[#050505] transition hover:bg-white/90"
+      className="shrink-0 rounded-md bg-white px-3 py-2 text-sm font-medium text-[#050505] transition hover:bg-white/90 sm:px-4"
     >
       {signInLabel}
     </Link>

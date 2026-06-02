@@ -28,11 +28,11 @@ function CreemRedirectModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-8 shadow-2xl"
+        className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-semibold text-white">
@@ -62,7 +62,7 @@ function CreemRedirectModal({
           </p>
         )}
 
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             onClick={onContinue}
             disabled={isLoading}
@@ -311,28 +311,28 @@ export default function PricingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#050505]">
       {/* Nav */}
-      <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-white/5">
+      <header className="flex flex-col gap-3 border-b border-white/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
         <div className="flex min-w-0 items-center gap-2">
           <div className="h-6 w-6 rounded bg-neon/20 flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ee787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <Link href="/" className="text-lg font-semibold text-white tracking-tight">
+          <Link href="/" className="truncate text-lg font-semibold tracking-tight text-white">
             Check AI Code
           </Link>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <Link href="/why" className="text-sm text-white/60 transition hover:text-white">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
+          <Link href="/why" className="shrink-0 text-sm text-white/60 transition hover:text-white">
             {t("why")}
           </Link>
-          <Link href="/guide" className="text-sm text-white/60 transition hover:text-white">
+          <Link href="/guide" className="shrink-0 text-sm text-white/60 transition hover:text-white">
             {t("guide")}
           </Link>
-          <Link href="/review" className="text-sm text-white/60 hover:text-white transition">
+          <Link href="/review" className="shrink-0 text-sm text-white/60 transition hover:text-white">
             {t("reviewTitle")}
           </Link>
-          <Link href="/feedback" className="text-sm text-white/60 transition hover:text-white">
+          <Link href="/feedback" className="shrink-0 text-sm text-white/60 transition hover:text-white">
             {t("feedback")}
           </Link>
           <LangToggle />
@@ -341,16 +341,16 @@ export default function PricingPage() {
       </header>
 
       {/* Content */}
-      <main className="flex flex-1 flex-col items-center px-6 py-10 lg:py-12">
+      <main className="flex flex-1 flex-col items-center px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
         <div className="mb-3 text-center">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-neon/20 bg-neon/5 px-3 py-1">
             <span className="text-xs font-medium text-neon">Simple pricing</span>
           </div>
         </div>
-        <h1 className="text-3xl font-bold text-white sm:text-4xl">
+        <h1 className="text-center text-3xl font-bold text-white sm:text-4xl">
           {t("pricingTitle")}
         </h1>
-        <p className="mt-2 text-white/40">{t("pricingSubtitle")}</p>
+        <p className="mt-2 text-center text-sm leading-relaxed text-white/40 sm:text-base">{t("pricingSubtitle")}</p>
         <div className="mt-4 inline-flex max-w-2xl items-start gap-2 rounded-xl border border-neon/20 bg-neon/5 px-4 py-2 text-left text-sm font-medium leading-relaxed text-neon sm:items-center sm:rounded-full">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <polyline points="20 6 9 17 4 12" />
@@ -450,7 +450,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pro trial note */}
-        <div className="mt-8 flex max-w-2xl items-start gap-3 rounded-xl border border-neon/15 bg-neon/[0.03] px-6 py-4">
+        <div className="mt-8 flex max-w-2xl items-start gap-3 rounded-xl border border-neon/15 bg-neon/[0.03] px-4 py-4 sm:px-6">
           <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neon/10 text-neon">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="9" />

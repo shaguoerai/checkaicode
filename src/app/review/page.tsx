@@ -538,39 +538,47 @@ export default function ReviewPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#050505]">
       {/* Nav */}
-      <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-white/5">
+      <header className="flex flex-col gap-3 border-b border-white/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
         <div className="flex min-w-0 items-center gap-2">
           <div className="h-6 w-6 rounded bg-neon/20 flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ee787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <Link href="/" className="text-lg font-semibold text-white tracking-tight">
+          <Link href="/" className="truncate text-lg font-semibold tracking-tight text-white">
             Check AI Code
           </Link>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <Link href="/why" className="text-sm text-white/60 transition hover:text-white">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
+          <Link href="/why" className="shrink-0 text-sm text-white/60 transition hover:text-white">
             {t("why")}
           </Link>
-          <Link href="/guide" className="text-sm text-white/60 transition hover:text-white">
+          <Link href="/guide" className="shrink-0 text-sm text-white/60 transition hover:text-white">
             {t("guide")}
           </Link>
-          <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition">
+          <Link href="/pricing" className="shrink-0 text-sm text-white/60 transition hover:text-white">
             {t("viewPricing")}
           </Link>
-          <Link href="/feedback" className="text-sm text-white/60 transition hover:text-white">
+          <Link href="/feedback" className="shrink-0 text-sm text-white/60 transition hover:text-white">
             {t("feedback")}
           </Link>
           <LangToggle />
           {usage && !usage.isPro && usage.limit > 0 && (
-            <span className="rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400">
-              {t("usageLeft").replace("{N}", String(usage.limit - usage.count))}
+            <span className="shrink-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400">
+              <span className="sm:hidden">
+                {lang === "zh"
+                  ? `剩 ${usage.limit - usage.count} 次`
+                  : `${usage.limit - usage.count} left`}
+              </span>
+              <span className="hidden sm:inline">
+                {t("usageLeft").replace("{N}", String(usage.limit - usage.count))}
+              </span>
             </span>
           )}
           {usage?.isPro && (
-            <span className="rounded-md border border-neon/20 bg-neon/10 px-2.5 py-1 text-xs font-medium text-neon">
-              {t("usagePro")}
+            <span className="shrink-0 rounded-md border border-neon/20 bg-neon/10 px-2.5 py-1 text-xs font-medium text-neon">
+              <span className="sm:hidden">Pro</span>
+              <span className="hidden sm:inline">{t("usagePro")}</span>
             </span>
           )}
           <AuthStatus signInLabel={t("signIn")} />
@@ -578,10 +586,10 @@ export default function ReviewPage() {
       </header>
 
       {/* Content */}
-      <main className="flex min-h-0 flex-1 flex-col px-6 py-5">
+      <main className="flex min-h-0 flex-1 flex-col px-3 py-4 sm:px-6 sm:py-5">
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-white">{t("reviewTitle")}</h1>
-          <p className="mt-1 text-white/40">{t("reviewSubtitle")}</p>
+          <h1 className="text-xl font-bold text-white sm:text-2xl">{t("reviewTitle")}</h1>
+          <p className="mt-1 text-sm leading-relaxed text-white/40 sm:text-base">{t("reviewSubtitle")}</p>
         </div>
 
         {checkoutStatus !== "idle" && (
@@ -622,7 +630,7 @@ export default function ReviewPage() {
         <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
           {/* Editor */}
           <div
-            className="flex min-h-0 flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-4"
+            className="flex min-h-0 flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-3 sm:p-4"
             onDrop={onDrop}
             onDragOver={(e) => e.preventDefault()}
           >
@@ -667,10 +675,10 @@ export default function ReviewPage() {
               </button>
             </div>
 
-            <div className="mb-3 flex flex-wrap items-center gap-3">
+            <div className="mb-3 grid gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-medium text-white transition hover:border-neon/30 hover:bg-white/8"
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-medium text-white transition hover:border-neon/30 hover:bg-white/8 sm:justify-start"
               >
                 <UploadIcon />
                 {t("uploadFile")}
@@ -678,7 +686,7 @@ export default function ReviewPage() {
               <select
                 value={activeTab.language}
                 onChange={(e) => setActiveLanguage(e.target.value)}
-                className="h-9 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white outline-none focus:border-neon/30"
+                className="h-9 min-w-0 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white outline-none focus:border-neon/30 sm:w-auto"
               >
                 {LANG_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value} className="bg-[#0a0a0a] text-white">
@@ -691,7 +699,7 @@ export default function ReviewPage() {
                 value={activeTab.filename}
                 onChange={(e) => setActiveFilename(e.target.value)}
                 placeholder="filename"
-                className="h-9 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white outline-none focus:border-neon/30 w-32"
+                className="h-9 min-w-0 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white outline-none focus:border-neon/30 sm:w-32"
               />
               <input
                 ref={fileInputRef}
@@ -706,15 +714,15 @@ export default function ReviewPage() {
               value={activeTab.code}
               onChange={(e) => setActiveCode(e.target.value)}
               placeholder={t("codePlaceholder")}
-              className="min-h-[180px] max-h-[360px] flex-none resize-y overflow-auto rounded-lg bg-[#0a0a0a] p-4 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30"
+              className="min-h-[220px] max-h-[55svh] flex-none resize-y overflow-auto rounded-lg bg-[#0a0a0a] p-3 font-mono text-sm leading-relaxed text-slate-300 outline-none ring-1 ring-white/8 focus:ring-neon/30 sm:max-h-[360px] sm:p-4"
               style={{ height: editorHeight }}
               spellCheck={false}
             />
             {/* Pro controls: scan mode + privacy toggle */}
             {isPro && (
-              <div className="mt-3 flex flex-wrap items-center gap-3">
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 {/* Scan mode segmented control */}
-                <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.02] p-0.5">
+                <div className="grid grid-cols-2 rounded-lg border border-white/10 bg-white/[0.02] p-0.5 sm:flex sm:items-center">
                   <button
                     onClick={() => setScanMode("standard")}
                     className={`rounded-md px-3 py-1 text-xs font-medium transition ${
@@ -773,19 +781,19 @@ export default function ReviewPage() {
 
           {/* Result */}
           {issues !== null && (
-            <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-4 lg:max-w-xl">
+            <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.02] p-3 sm:p-4 lg:max-w-xl">
               {/* Stats header */}
-              <div className="mb-4 flex items-center gap-4">
+              <div className="mb-4 flex flex-wrap items-start gap-3 sm:flex-nowrap sm:items-center sm:gap-4">
                 <ScoreRing score={score} />
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-white">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-semibold leading-snug text-white sm:text-lg">
                     {issues.length === 0 ? t("resultNoIssues") : t("resultTitle").replace("{N}", String(issues.length))}
                   </h2>
                   {summary && (
                     <p className="mt-0.5 text-xs text-white/40">{summary}</p>
                   )}
                   {llmStatus && (
-                    <p className="mt-1 text-[11px] text-white/35">
+                    <p className="mt-1 break-words text-[11px] text-white/35">
                       AI enhancement:{" "}
                       {llmStatus.generated > 0
                         ? `generated ${llmStatus.generated} enhanced finding${llmStatus.generated === 1 ? "" : "s"}${llmStatus.model ? ` with ${llmStatus.model}` : ""}`
@@ -804,7 +812,7 @@ export default function ReviewPage() {
                   )}
                 </div>
                 {/* Export buttons */}
-                <div className="flex items-center gap-1">
+                <div className="ml-auto flex shrink-0 items-center gap-1">
                   <button onClick={copyJSON} className="rounded-md border border-white/10 px-2 py-1 text-[10px] text-white/40 hover:text-white/70 transition" title="Copy JSON">
                     JSON
                   </button>
@@ -864,7 +872,7 @@ export default function ReviewPage() {
               )}
 
               {/* Issues list */}
-              <div className="flex-1 overflow-auto space-y-2 max-h-[480px]">
+              <div className="max-h-[65svh] flex-1 space-y-2 overflow-auto sm:max-h-[480px]">
                 {issues.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-white/20">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -889,7 +897,7 @@ export default function ReviewPage() {
                         {/* Left color bar */}
                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.barColor}`} />
                         <div className="pl-3">
-                          <div className="flex items-start gap-2">
+                          <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
                             <span
                               className={`mt-0.5 inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${cfg.labelColor} ${cfg.badgeBg}`}
                             >
@@ -902,7 +910,7 @@ export default function ReviewPage() {
                               <p className="text-sm text-white/80 leading-relaxed">
                                 {issue.message}
                               </p>
-                              <p className="mt-1 text-[11px] text-white/30 font-mono">
+                              <p className="mt-1 break-words font-mono text-[11px] text-white/30">
                                 {issue.file !== "input" && <span className="mr-1">{issue.file}</span>}
                                 L{issue.line}
                                 {issue.endLine && issue.endLine !== issue.line
