@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
+import { JsonLd } from "@/components/json-ld";
+import { organizationSchema, websiteSchema } from "@/lib/seo-schema";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkaicode.com"),
@@ -33,6 +35,7 @@ export default function RootLayout({
   return (
     <html className="h-full antialiased dark">
       <body className="min-h-full flex flex-col">
+        <JsonLd data={[organizationSchema, websiteSchema]} />
         <I18nProvider>{children}</I18nProvider>
       </body>
     </html>

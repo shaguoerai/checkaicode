@@ -5,6 +5,8 @@ import { useI18n } from "@/lib/i18n";
 import { useEffect, useRef } from "react";
 import { AuthStatus } from "@/components/auth-status";
 import { SiteFooter } from "@/components/site-footer";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbSchema, softwareApplicationSchema } from "@/lib/seo-schema";
 
 function LangToggle() {
   const { lang, setLang, t } = useI18n();
@@ -146,6 +148,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#050505] relative">
+      <JsonLd data={[softwareApplicationSchema, breadcrumbSchema([{ name: "Home", path: "/" }])]} />
       <ParticleCanvas />
       <div className="relative z-10 bg-grid">
         {/* Nav */}

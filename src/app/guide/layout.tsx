@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbSchema, guideFaqSchema, guideHowToSchema } from "@/lib/seo-schema";
 
 export const metadata: Metadata = {
   title: "How to use Check AI Code | CheckAICode",
@@ -24,5 +26,19 @@ export const metadata: Metadata = {
 };
 
 export default function GuideLayout({ children }: { children: ReactNode }) {
-  return children;
+  return (
+    <>
+      <JsonLd
+        data={[
+          guideHowToSchema,
+          guideFaqSchema,
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Guide", path: "/guide" },
+          ]),
+        ]}
+      />
+      {children}
+    </>
+  );
 }

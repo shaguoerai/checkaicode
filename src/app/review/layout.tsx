@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbSchema, softwareApplicationSchema } from "@/lib/seo-schema";
 
 export const metadata: Metadata = {
   title: "Scan Your Code - Check AI Code",
@@ -24,5 +26,18 @@ export const metadata: Metadata = {
 };
 
 export default function ReviewLayout({ children }: { children: ReactNode }) {
-  return children;
+  return (
+    <>
+      <JsonLd
+        data={[
+          softwareApplicationSchema,
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Review", path: "/review" },
+          ]),
+        ]}
+      />
+      {children}
+    </>
+  );
 }

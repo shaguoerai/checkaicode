@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbSchema, whyFaqSchema } from "@/lib/seo-schema";
 
 export const metadata: Metadata = {
   title: "Why Check AI Code | CheckAICode",
@@ -24,5 +26,18 @@ export const metadata: Metadata = {
 };
 
 export default function WhyLayout({ children }: { children: ReactNode }) {
-  return children;
+  return (
+    <>
+      <JsonLd
+        data={[
+          whyFaqSchema,
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Why Check AI Code", path: "/why" },
+          ]),
+        ]}
+      />
+      {children}
+    </>
+  );
 }

@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const baseUrl = "https://checkaicode.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date("2026-05-23");
+  const lastModified = new Date("2026-06-04");
 
   return [
     {
