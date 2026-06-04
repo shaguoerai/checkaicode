@@ -38,7 +38,15 @@ function samplePath(sample, index) {
   return path.join(language, `${prefix}-${safeName(sample.id)}.${extension}`);
 }
 
-const samples = JSON.parse(readFileSync(samplesPath, "utf8"));
+let samples;
+try {
+  samples = JSON.parse(readFileSync(samplesPath, "utf8"));
+} catch (error) {
+  console.error(
+    `Failed to read benchmark samples: ${error instanceof Error ? error.message : String(error)}`
+  );
+  process.exit(1);
+}
 rmSync(outputDir, { recursive: true, force: true });
 mkdirSync(outputDir, { recursive: true });
 

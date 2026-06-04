@@ -43,8 +43,16 @@ function main() {
     process.exit(1);
   }
 
-  const raw = fs.readFileSync(inputFile, "utf-8");
-  const report: Report = JSON.parse(raw);
+  let report: Report;
+  try {
+    const raw = fs.readFileSync(inputFile, "utf-8");
+    report = JSON.parse(raw);
+  } catch (error) {
+    console.error(
+      `Failed to read Playwright JSON report: ${error instanceof Error ? error.message : String(error)}`
+    );
+    process.exit(1);
+  }
 
   const lines: string[] = [];
   lines.push(`# E2E Test Report`);

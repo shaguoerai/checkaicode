@@ -131,7 +131,7 @@ def run_semgrep(code: str, language: str) -> dict:
     finally:
         try:
             os.unlink(tmp.name)
-        except:
+        except OSError:
             pass
 
 

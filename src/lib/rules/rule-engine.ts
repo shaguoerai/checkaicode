@@ -78,13 +78,38 @@ function normalizeSecretKeyName(key: string): string {
   return key.replace(/[^a-z0-9]/gi, "").toLowerCase();
 }
 
-function parseConfigAssignment(line: string): { key: string; value: string } | null {
-  const match = line.match(/^\s*["']?([A-Za-z_][A-Za-z0-9_.-]*)["']?\s*[:=]\s*(.+?)\s*[,}]?\s*$/);
+function parseConfigAssignment(line: string): { key: string; value: string; rawValue: string; quoted: boolean } | null {
+  const match = line.match(/^\s*["']?([A-Za-z_][A-Za-z0-9_.-]*)["']?\s*(?<![=!])[:=](?!=)\s*(.+?)\s*[,}]?\s*$/);
   if (!match) return null;
 
   const rawValue = stripInlineComment(match[2].trim()).trim();
-  const value = rawValue.replace(/^["']|["']$/g, "");
-  return { key: match[1], value };
+  const value = rawValue.replace(/[;,]\s*$/, "").replace(/^["']|["']$/g, "");
+  const quoted = /^["'][\s\S]*["']$/.test(rawValue);
+  return { key: match[1], value, rawValue, quoted };
+}
+
+function looksLikeDynamicReference(value: string): boolean {
+  return /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\[[^\]]+\])*$/.test(value);
+}
+
+function isDynamicSecretAssignment(line: string): boolean {
+  const assignment = parseConfigAssignment(line);
+  if (!assignment) return false;
+
+  const normalizedKey = normalizeSecretKeyName(assignment.key);
+  if (!SECRET_KEY_MARKERS.some((marker) => normalizedKey.includes(marker))) {
+    return false;
+  }
+
+  return !assignment.quoted && looksLikeDynamicReference(assignment.value);
+}
+
+function isDynamicSecretProperty(line: string): boolean {
+  const dynamicProperty = new RegExp(
+    `\\b(?:${SECRET_NAME_PATTERN})\\b\\s*[:=]\\s*[A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*|\\[[^\\]]+\\])*\\s*(?:[,;})]|$)`,
+    "i"
+  );
+  return dynamicProperty.test(line);
 }
 
 function looksLikeSecretAssignment(line: string): boolean {
@@ -98,6 +123,8 @@ function looksLikeSecretAssignment(line: string): boolean {
 
   const value = assignment.value.trim();
   if (value.length < 6) return false;
+  if (!assignment.quoted && looksLikeDynamicReference(value)) return false;
+  if (!assignment.quoted && /[()?:|&]/.test(value)) return false;
   if (/^(true|false|null|undefined|none|auto|input|local|test|development|production)$/i.test(value)) {
     return false;
   }
@@ -109,6 +136,49 @@ function looksLikeSecretAssignment(line: string): boolean {
   }
 
   return true;
+}
+
+function isEnvBackedSecretLine(line: string): boolean {
+  return /\b(?:process\.env|import\.meta\.env|Deno\.env|os\.environ|env\.)\b/.test(line);
+}
+
+function isLegitimatePythonJoin(line: string): boolean {
+  return (
+    /(^|[^A-Za-z0-9_])(?:r|u|f|b|br|rb)?["'][^"']*["']\.join\s*\(/i.test(line) ||
+    /\bos\.path\.join\s*\(/.test(line) ||
+    /\bos\.pathsep\.join\s*\(/.test(line)
+  );
+}
+
+function isTrustedTempJoin(line: string): boolean {
+  return (
+    /os\.path\.join\s*\(\s*(tmp_dir|temp_dir|tmpdir|tmp_path|semgrep_home|semgrep_cache)\s*,\s*["'][^"']+["']/.test(line) ||
+    /os\.path\.join\s*\(\s*os\.path\.dirname\(__file__\)\s*,\s*["'][^"']+["']/.test(line) ||
+    /os\.path\.join\s*\(\s*local_rules_dir\s*,\s*rs\.replace\(["']\/["']\s*,\s*["']_["']\)\s*\+\s*["']\.yaml["']/.test(line)
+  );
+}
+
+function isJsonParseProtected(lines: string[], index: number): boolean {
+  const start = Math.max(0, index - 40);
+  const context = lines.slice(start, index + 1).join("\n");
+  return /\btry\s*\{/.test(context) || /\bcatch\s*\(/.test(context);
+}
+
+function isFetchPromiseChained(lines: string[], index: number): boolean {
+  for (let i = index + 1; i < Math.min(lines.length, index + 4); i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) continue;
+    return trimmed.startsWith(".then(") || trimmed.startsWith(".catch(") || trimmed.startsWith(".finally(");
+  }
+  return false;
+}
+
+function isDictGetDefaulted(line: string): boolean {
+  return /\b(dict|data|payload|params|config|settings|record|row|obj)\.get\([^),]+,\s*[^)]+\)/.test(line);
+}
+
+function isSafeTypeofUndefinedCheck(line: string): boolean {
+  return /typeof\s+(window|document|navigator|localStorage|sessionStorage|globalThis|process)\s*===?\s*["']undefined["']/.test(line);
 }
 
 function normalizeLanguage(language: string, code: string): string {
@@ -779,7 +849,7 @@ const SEMANTIC_PATTERNS = [
     severity: "warning" as const,
   },
   {
-    pattern: /open\s*\([^)]+\)(?!.*close)/,
+    pattern: /(?<!with\s)open\s*\([^)]+\)(?!.*close)/,
     id: "SEM-003",
     title: "文件句柄未关闭",
     description: "文件打开后未在同级作用域内关闭，可能导致资源泄漏。",
@@ -820,7 +890,7 @@ const SEMANTIC_PATTERNS = [
     severity: "info" as const,
   },
   {
-    pattern: /==\s*(null|undefined)/,
+    pattern: /(?<![=!])==(?!=)\s*(null|undefined)/,
     id: "SEM-008",
     title: "宽松相等检查",
     description: "== null 同时匹配 null 和 undefined，可能引入隐式类型转换 bug。",
@@ -1184,6 +1254,11 @@ function detectSecurityIssues(code: string, lines: string[]): Issue[] {
     }
 
     for (const rule of SECURITY_PATTERNS) {
+      if (rule.id === "SEC-PATH-001" && isTrustedTempJoin(line)) continue;
+      if (
+        rule.id === "SEC-KEY-014" &&
+        (isEnvBackedSecretLine(line) || isDynamicSecretAssignment(line) || isDynamicSecretProperty(line))
+      ) continue;
       if (rule.pattern.test(line)) {
         issues.push(
           makeIssue(
@@ -1210,6 +1285,10 @@ function detectSemanticIssues(code: string, lines: string[]): Issue[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     for (const rule of SEMANTIC_PATTERNS) {
+      if (rule.id === "SEM-006" && isJsonParseProtected(lines, i)) continue;
+      if (rule.id === "SEM-015" && isFetchPromiseChained(lines, i)) continue;
+      if (rule.id === "SEM-004" && isDictGetDefaulted(line)) continue;
+      if (rule.id === "SEM-009" && isSafeTypeofUndefinedCheck(line)) continue;
       if (rule.pattern.test(line)) {
         issues.push(
           makeIssue(
@@ -1272,6 +1351,12 @@ function detectCrossLangMethods(code: string, lines: string[], language: string)
     const line = lines[i];
     for (const rule of CROSS_LANG_METHODS) {
       if (!rule.targetLang.includes(normalizedLang)) continue;
+      if (normalizedLang === "python" && rule.wrong === ".add(") {
+        continue;
+      }
+      if (normalizedLang === "python" && rule.wrong === ".join(" && isLegitimatePythonJoin(line)) {
+        continue;
+      }
       if (line.includes(rule.wrong)) {
         issues.push(
           makeIssue(

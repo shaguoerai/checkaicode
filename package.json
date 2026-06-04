@@ -11,7 +11,10 @@
     "benchmark:compare": "bash scripts/benchmark-compare.sh",
     "benchmark:pipeline": "node scripts/benchmark-static-pipeline.mjs",
     "benchmark:export": "node scripts/export-benchmark-corpus.mjs",
-    "ops:grant-pro": "node scripts/grant-pro-entitlement.mjs"
+    "ops:grant-pro": "node scripts/grant-pro-entitlement.mjs",
+    "ops:report": "node scripts/ops-report.mjs",
+    "ops:dogfood-scan": "node scripts/dogfood-scan.mjs",
+    "ops:dogfood-ui": "node scripts/behavior-dogfood-ui.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

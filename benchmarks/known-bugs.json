@@ -365,5 +365,101 @@
     "code": "const NODE_ENV = 'production';",
     "expectedPresent": [],
     "expectedAbsent": ["SEC-DEBUG-003"]
+  },
+  {
+    "id": "negative-env-backed-database-url",
+    "title": "DATABASE_URL read from process.env is not hardcoded",
+    "language": "javascript",
+    "code": "const connectionString = process.env.DATABASE_URL;\nif (!connectionString) throw new Error('DATABASE_URL is required');",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEC-KEY-014", "SEC-KEY-CONFIG"]
+  },
+  {
+    "id": "negative-python-string-join",
+    "title": "Python string join should not trigger JavaScript method confusion",
+    "language": "python",
+    "code": "missing = ['server', 'port']\nmessage = 'missing fields: ' + ','.join(missing)\npath = '.'.join(['127', '0', '0', '1'])",
+    "expectedPresent": [],
+    "expectedAbsent": ["CROSSLANG-JOIN"]
+  },
+  {
+    "id": "negative-python-with-open",
+    "title": "Python with open auto-closes the file handle",
+    "language": "python",
+    "code": "def log(path, msg):\n    with open(path, 'a') as f:\n        f.write(msg + '\\n')",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEM-003"]
+  },
+  {
+    "id": "negative-dynamic-secret-provider-config",
+    "title": "Provider secret fields may receive env-backed variables",
+    "language": "typescript",
+    "code": "const googleClientSecret = cleanEnv(process.env.GOOGLE_CLIENT_SECRET);\nGoogle({ clientId: googleClientId, clientSecret: googleClientSecret });\nconst headers = { \"x-api-key\": apiKey };\ntoken.sub = user.id;\nconst payload = { max_tokens: LLM_MAX_TOKENS[mode] };",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEC-KEY-014", "SEC-KEY-CONFIG"]
+  },
+  {
+    "id": "negative-python-set-add-and-pathsep-join",
+    "title": "Python set.add and os.pathsep.join are valid Python APIs",
+    "language": "python",
+    "code": "seen = set()\nseen.add(rule)\npythonpath = os.pathsep.join(['/var/task', os.environ.get('PYTHONPATH', '')])",
+    "expectedPresent": [],
+    "expectedAbsent": ["CROSSLANG-ADD", "CROSSLANG-JOIN"]
+  },
+  {
+    "id": "negative-json-parse-inside-try",
+    "title": "JSON.parse inside try/catch is handled",
+    "language": "typescript",
+    "code": "try {\n  const data = JSON.parse(raw);\n  return data;\n} catch {\n  return null;\n}",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEM-006"]
+  },
+  {
+    "id": "negative-temp-dir-fixed-path-join",
+    "title": "Joining trusted temp dir with fixed filename is not path traversal",
+    "language": "python",
+    "code": "tmp_dir = tempfile.mkdtemp(prefix='check-')\nsrc_file = os.path.join(tmp_dir, 'target.py')\ncache_dir = os.path.join(tmp_dir, '.cache')",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEC-PATH-001"]
+  },
+  {
+    "id": "negative-long-try-json-parse",
+    "title": "JSON.parse in a longer try block is handled",
+    "language": "typescript",
+    "code": "try {\n  const a = 1;\n  const b = 2;\n  const c = 3;\n  const d = 4;\n  const e = 5;\n  const f = 6;\n  const g = 7;\n  const h = 8;\n  const parsed = JSON.parse(raw);\n  return parsed;\n} catch {\n  return null;\n}",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEM-006"]
+  },
+  {
+    "id": "negative-internal-semgrep-path-joins",
+    "title": "Internal Semgrep temp and local rule paths are trusted",
+    "language": "python",
+    "code": "local_rules_dir = os.path.join(os.path.dirname(__file__), '..', 'semgrep-rules')\nlocal_yaml = os.path.join(local_rules_dir, rs.replace('/', '_') + '.yaml')\nsettings = os.path.join(semgrep_home, 'settings.yml')",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEC-PATH-001"]
+  },
+  {
+    "id": "negative-fetch-promise-chain",
+    "title": "fetch followed by then/catch is handled",
+    "language": "typescript",
+    "code": "fetch('/api/user', { credentials: 'same-origin' })\n  .then((res) => res.json())\n  .then((data) => setUser(data))\n  .catch(() => setUser(null));",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEM-015"]
+  },
+  {
+    "id": "negative-python-dict-get-default",
+    "title": "Python dict.get with default value is handled",
+    "language": "python",
+    "code": "for result in data.get('results', []):\n    severity = result.get('severity', 'warning')\ncode = payload.get('code', '')",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEM-004"]
+  },
+  {
+    "id": "negative-typeof-window-ssr-guard",
+    "title": "typeof window undefined check is valid for SSR guards",
+    "language": "typescript",
+    "code": "if (typeof window === 'undefined') return 'server';\nif (typeof document !== 'undefined') document.title = 'Ready';",
+    "expectedPresent": [],
+    "expectedAbsent": ["SEM-009"]
   }
 ]
