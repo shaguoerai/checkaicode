@@ -308,7 +308,10 @@ export default function ReviewPage() {
           setIsPro(data.usage.isPro ?? false);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setUsage(null);
+        setIsPro(false);
+      });
   }, []);
 
   /* Refresh usage helper */

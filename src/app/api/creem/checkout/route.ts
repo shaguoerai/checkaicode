@@ -9,6 +9,20 @@ import {
 
 export const runtime = "nodejs";
 
+function isAllowedCheckoutUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "creem.io" ||
+        url.hostname.endsWith(".creem.io") ||
+        url.hostname === "checkaicode.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: Request) {
   const session = await auth();
 
@@ -55,10 +69,11 @@ export async function POST(req: Request) {
   const data = await response.json().catch(() => null);
   const checkoutUrl = data?.checkout_url || data?.checkoutUrl || data?.url;
 
-  if (!response.ok || typeof checkoutUrl !== "string") {
+  if (!response.ok || typeof checkoutUrl !== "string" || !isAllowedCheckoutUrl(checkoutUrl)) {
     console.error("[creem-checkout] failed", {
       status: response.status,
       error: data?.error || data?.message || "unknown",
+      invalidCheckoutUrl: typeof checkoutUrl === "string" && !isAllowedCheckoutUrl(checkoutUrl),
     });
     return NextResponse.json({ error: "Unable to create checkout" }, { status: 502 });
   }

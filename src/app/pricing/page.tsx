@@ -209,6 +209,21 @@ export default function PricingPage() {
     setIsCreatingCheckout(true);
     setCheckoutError("");
 
+    function navigateToCheckout(value: string) {
+      try {
+        const url = new URL(value);
+        const allowed =
+          url.protocol === "https:" &&
+          (url.hostname === "creem.io" ||
+            url.hostname.endsWith(".creem.io") ||
+            url.hostname === window.location.hostname);
+        if (!allowed) throw new Error("Unexpected checkout URL");
+        window.location.assign(url.toString());
+      } catch {
+        setCheckoutError(t("checkoutFailed"));
+      }
+    }
+
     try {
       const res = await fetch("/api/creem/checkout", {
         method: "POST",
@@ -218,12 +233,12 @@ export default function PricingPage() {
       const data = await res.json().catch(() => ({}));
 
       if (res.status === 401) {
-        window.location.href = "/auth/signin";
+        window.location.assign("/auth/signin");
         return;
       }
 
       if (typeof data.checkoutUrl === "string") {
-        window.location.href = data.checkoutUrl;
+        navigateToCheckout(data.checkoutUrl);
         return;
       }
 

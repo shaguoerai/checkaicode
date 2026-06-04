@@ -43,8 +43,8 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const LLM_TIMEOUT_MS = 15000;
 const LLM_MAX_TOKENS: Record<LLMScanMode, number> = {
-  standard: 1024,
-  deep: 1536,
+  standard: 2048,
+  deep: 3072,
 };
 
 const MODEL_CONFIG = {
@@ -67,7 +67,7 @@ function buildPrompt(input: LLMAnalysisInput): string {
   const issueSummary = issues
     .map(
       (i, idx) =>
-        `${idx + 1}. [${i.severity}] Line ${i.line}: ${i.message} (ruleId: ${i.ruleId})`
+        `${idx + 1}. [${i.severity}] Line ${i.line}: ${i.message.slice(0, 220)} (ruleId: ${i.ruleId})`
     )
     .join("\n");
 
@@ -91,7 +91,7 @@ For each listed static issue, provide:
 1. line number
 2. the original ruleId exactly as provided
 3. a clear explanation of why it's a problem
-4. a concrete fix suggestion with code
+4. a concise fix suggestion
 5. mark as "ai_enhanced"
 
 Output strictly as JSON array:
@@ -101,8 +101,8 @@ Output strictly as JSON array:
     "ruleId": "original-rule-id",
     "severity": "critical|warning|info",
     "message": "Clear explanation",
-    "fixSuggestion": "Description of the fix",
-    "fixCode": "actual code snippet",
+    "fixSuggestion": "Short fix, max 180 chars",
+    "fixCode": "optional short snippet",
     "aiEnhanced": true,
     "falsePositive": false
   }
@@ -114,6 +114,7 @@ Rules:
 - Do NOT invent issues that are not in the static analysis list
 - Do NOT hallucinate APIs or functions that don't exist
 - If unsure about a fix, keep the original finding and write a cautious fixSuggestion
+- Keep each object compact
 - Keep fixCode short; omit fixCode if a compact syntactically valid snippet is not possible
 `;
 }
@@ -193,25 +194,92 @@ async function callDeepSeek(
   return { content, model };
 }
 
-function parseLLMResponse(raw: string): LLMIssue[] {
-  // 尝试提取 JSON 数组（LLM 可能包裹在 markdown code block 中）
-  const jsonMatch = raw.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    throw new Error("No JSON array found in LLM response");
+function parseIssuesArray(value: unknown): LLMIssue[] {
+  if (!Array.isArray(value)) {
+    throw new Error("LLM response is not an array");
+  }
+  return value;
+}
+
+function sanitizeJsonLike(value: string): string {
+  return value
+    .replace(/```(?:json)?/gi, "")
+    .replace(/```/g, "")
+    .replace(/,\s*([\]}])/g, "$1")
+    .trim();
+}
+
+function extractCompleteJsonObjects(arrayText: string): LLMIssue[] {
+  const objects: LLMIssue[] = [];
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < arrayText.length; i++) {
+    const char = arrayText[i];
+
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === "\"") inString = false;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") {
+      if (depth === 0) start = i;
+      depth++;
+      continue;
+    }
+
+    if (char === "}") {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        const objectText = sanitizeJsonLike(arrayText.slice(start, i + 1));
+        try {
+          objects.push(JSON.parse(objectText));
+        } catch {
+          // Keep looking for later complete objects.
+        }
+        start = -1;
+      }
+    }
   }
 
+  if (!objects.length) {
+    throw new Error("No complete JSON objects found in LLM response");
+  }
+  return objects;
+}
+
+function parseLLMResponse(raw: string): LLMIssue[] {
+  // 尝试提取 JSON 数组（LLM 可能包裹在 markdown code block 中）
+  const cleanedRaw = sanitizeJsonLike(raw);
+  const arrayStart = cleanedRaw.indexOf("[");
+  if (arrayStart < 0) {
+    throw new Error("No JSON array start found in LLM response");
+  }
+
+  const arrayEnd = cleanedRaw.lastIndexOf("]");
+  const arrayText = arrayEnd > arrayStart
+    ? cleanedRaw.slice(arrayStart, arrayEnd + 1)
+    : cleanedRaw.slice(arrayStart);
+
   try {
-    const parsed = JSON.parse(jsonMatch[0]);
-    if (!Array.isArray(parsed)) {
-      throw new Error("LLM response is not an array");
-    }
-    return parsed;
-  } catch (_e: unknown) {
+    return parseIssuesArray(JSON.parse(arrayText));
+  } catch {
     // 尝试清理常见 LLM 格式问题后重新解析
-    const cleaned = jsonMatch[0]
-      .replace(/,\s*([\]}])/g, "$1") // 去除尾随逗号
-      .replace(/\n/g, " ");
-    return JSON.parse(cleaned);
+    try {
+      return parseIssuesArray(JSON.parse(sanitizeJsonLike(arrayText).replace(/\n/g, " ")));
+    } catch {
+      // If the model was truncated after several full objects, keep the usable objects.
+      return extractCompleteJsonObjects(arrayText);
+    }
   }
 }
 

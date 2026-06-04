@@ -23,7 +23,11 @@ function parsePayload(req: Request, text: string): Record<string, unknown> {
   const contentType = req.headers.get("content-type") || "";
 
   if (contentType.includes("application/json")) {
-    return JSON.parse(text);
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error("Invalid JSON payload");
+    }
   }
 
   if (contentType.includes("application/x-www-form-urlencoded")) {
