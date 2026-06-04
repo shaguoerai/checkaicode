@@ -72,3 +72,4 @@ next-env.d.ts
 
 # Build cache
 tsconfig.tsbuildinfo
+.env*.local

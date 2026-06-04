@@ -62,6 +62,7 @@ model User {
   accounts  Account[]
   sessions  Session[]
   reviews   Review[]
+  softLaunchFeedbacks SoftLaunchFeedback[]
 
   @@map("users")
 }
@@ -114,4 +115,27 @@ model PaywallEvent {
   @@index([eventType, createdAt])
   @@index([userId, createdAt])
   @@map("paywall_events")
+}
+
+model SoftLaunchFeedback {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  channel         String
+  language        String
+  projectType     String?  @map("project_type")
+  usefulFinding   String   @db.Text @map("useful_finding")
+  falsePositive   String?  @db.Text @map("false_positive")
+  falseNegative   String?  @db.Text @map("false_negative")
+  uxIssue         String?  @db.Text @map("ux_issue")
+  pricingFeedback String?  @db.Text @map("pricing_feedback")
+  otherFeedback   String?  @db.Text @map("other_feedback")
+  rewardGranted   Boolean  @default(false) @map("reward_granted")
+  rewardDays      Int      @default(0) @map("reward_days")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([channel, createdAt])
+  @@map("soft_launch_feedback")
 }

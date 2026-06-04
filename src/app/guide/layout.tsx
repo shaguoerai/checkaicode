@@ -5,10 +5,14 @@ export const metadata: Metadata = {
   title: "How to use Check AI Code | CheckAICode",
   description:
     "A short guide to scanning code, reading severity results, using Privacy Mode, and understanding Free vs Pro limits in Check AI Code.",
+  alternates: {
+    canonical: "/guide",
+  },
   openGraph: {
     title: "How to use Check AI Code",
     description:
       "A short guide to scanning code, reading severity results, using Privacy Mode, and understanding Free vs Pro limits.",
+    url: "/guide",
     type: "article",
   },
   twitter: {

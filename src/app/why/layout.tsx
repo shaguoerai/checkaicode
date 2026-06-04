@@ -5,10 +5,14 @@ export const metadata: Metadata = {
   title: "Why Check AI Code | CheckAICode",
   description:
     "What Check AI Code does, who it is for, what it can catch, and how it differs from traditional linting and security scanning tools.",
+  alternates: {
+    canonical: "/why",
+  },
   openGraph: {
     title: "Why Check AI Code",
     description:
       "A practical overview of Check AI Code: AI-generated code review, security checks, runtime bug patterns, and honest limits.",
+    url: "/why",
     type: "article",
   },
   twitter: {
