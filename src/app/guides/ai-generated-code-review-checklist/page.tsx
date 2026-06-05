@@ -244,6 +244,13 @@ export default function AIGeneratedCodeReviewChecklistPage() {
   return { ok: true }
 }`}
             </CodeBlock>
+            <p>
+              For more JavaScript and TypeScript examples, read the dedicated{" "}
+              <Link href="/guides/javascript-async-code-review" className="font-semibold text-neon transition hover:text-neon-dim">
+                async code review guide
+              </Link>
+              .
+            </p>
           </Section>
 
           <Section title="Where Check AI Code Helps">

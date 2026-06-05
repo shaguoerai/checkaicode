@@ -182,6 +182,7 @@ const copy = {
     checklistTitle: "Review AI-generated code before shipping",
     checklistBody: "Use the practical checklist for async bugs, auth checks, input validation, secrets, files, framework drift, dependencies, and tests.",
     checklistCta: "Read the checklist",
+    asyncGuideCta: "Review JavaScript async bugs",
     limitsTitle: "Important limits",
     limits: ["It does not replace tests, manual review, or a formal security audit.", "It cannot guarantee every bug will be found.", "Business logic still needs human context."],
     freeProTitle: "Free vs Pro",
@@ -214,6 +215,7 @@ const copy = {
     checklistTitle: "AI 生成代码上线前怎么检查",
     checklistBody: "用这份实用清单检查 async、权限、输入校验、密钥、文件路径、框架版本、依赖和测试。",
     checklistCta: "查看检查清单",
+    asyncGuideCta: "查看 JavaScript async 常见错误",
     limitsTitle: "重要边界",
     limits: ["不能替代测试、人工 code review 或正式安全审计。", "不能保证发现所有 bug。", "业务逻辑是否正确仍需要人来判断。"],
     freeProTitle: "免费版和 Pro",
@@ -345,6 +347,13 @@ export default function GuidePage() {
                 className="mt-5 inline-flex text-sm font-semibold text-neon transition hover:text-neon-dim"
               >
                 {c.checklistCta}
+                <ArrowIcon className="ml-2 h-4 w-4" />
+              </Link>
+              <Link
+                href="/guides/javascript-async-code-review"
+                className="mt-3 inline-flex text-sm font-semibold text-white/70 transition hover:text-white"
+              >
+                {c.asyncGuideCta}
                 <ArrowIcon className="ml-2 h-4 w-4" />
               </Link>
             </div>
