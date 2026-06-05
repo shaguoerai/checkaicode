@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const baseUrl = "https://checkaicode.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date("2026-06-04");
+  const lastModified = new Date("2026-06-05");
 
   return [
     {
@@ -47,6 +47,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "monthly",
       priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guides/ai-generated-code-review-checklist`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.72,
     },
     {
       url: `${baseUrl}/privacy`,

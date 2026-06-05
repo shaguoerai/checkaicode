@@ -95,6 +95,7 @@ const copy = {
       "Check AI Code catches practical bugs, security risks, and AI-generated code mistakes in small scripts, components, API handlers, and multi-file snippets.",
     primary: "Try a free review",
     secondary: "How it works",
+    checklistCta: "Read the AI-generated code review checklist",
     problemTitle: "The problem",
     problems: [
       ["AI code looks plausible", "It can invent APIs, skip awaits, miss runtime edge cases, or use examples from the wrong framework version."],
@@ -142,6 +143,7 @@ const copy = {
       "Check AI Code 用来检查实际 bug、安全风险，以及 AI 生成代码里常见的错误，适合脚本、组件、API handler 和多文件片段。",
     primary: "免费试一次",
     secondary: "查看使用指南",
+    checklistCta: "查看 AI 生成代码检查清单",
     problemTitle: "它解决什么问题",
     problems: [
       ["AI 代码看起来很像真的", "但它可能编造 API、漏 await、忽略运行时边界，或套用错误框架版本的示例。"],
@@ -238,6 +240,13 @@ export default function WhyPage() {
                   {c.secondary}
                 </Link>
               </div>
+              <Link
+                href="/guides/ai-generated-code-review-checklist"
+                className="mt-5 inline-flex text-sm font-semibold text-neon transition hover:text-neon-dim"
+              >
+                {c.checklistCta}
+                <ArrowIcon className="ml-2 h-4 w-4" />
+              </Link>
             </div>
             <MiniReviewVisual />
           </div>

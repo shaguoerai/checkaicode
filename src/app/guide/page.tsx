@@ -179,6 +179,9 @@ const copy = {
     screenshot3Body: "Pro users can run deeper checks or skip LLM enhancement when they want a more privacy-conscious static pass.",
     bestForTitle: "Best use cases",
     bestFor: ["AI-generated code before shipping", "Small scripts and backend handlers", "React components and TypeScript utilities", "Security-sensitive snippets with keys, queries, or file paths"],
+    checklistTitle: "Review AI-generated code before shipping",
+    checklistBody: "Use the practical checklist for async bugs, auth checks, input validation, secrets, files, framework drift, dependencies, and tests.",
+    checklistCta: "Read the checklist",
     limitsTitle: "Important limits",
     limits: ["It does not replace tests, manual review, or a formal security audit.", "It cannot guarantee every bug will be found.", "Business logic still needs human context."],
     freeProTitle: "Free vs Pro",
@@ -208,6 +211,9 @@ const copy = {
     screenshot3Body: "Pro 用户可以运行更深的检查；如果更在意隐私，可以开启 Privacy Mode 跳过 LLM 增强。",
     bestForTitle: "适合检查什么",
     bestFor: ["AI 生成代码上线前自查", "小脚本和后端接口", "React 组件和 TypeScript 工具函数", "包含密钥、查询、文件路径等敏感逻辑的片段"],
+    checklistTitle: "AI 生成代码上线前怎么检查",
+    checklistBody: "用这份实用清单检查 async、权限、输入校验、密钥、文件路径、框架版本、依赖和测试。",
+    checklistCta: "查看检查清单",
     limitsTitle: "重要边界",
     limits: ["不能替代测试、人工 code review 或正式安全审计。", "不能保证发现所有 bug。", "业务逻辑是否正确仍需要人来判断。"],
     freeProTitle: "免费版和 Pro",
@@ -330,6 +336,17 @@ export default function GuidePage() {
                   </div>
                 ))}
               </div>
+              <div className="mt-5 border-t border-white/8 pt-5">
+                <h3 className="text-sm font-semibold text-white">{c.checklistTitle}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/50">{c.checklistBody}</p>
+              </div>
+              <Link
+                href="/guides/ai-generated-code-review-checklist"
+                className="mt-5 inline-flex text-sm font-semibold text-neon transition hover:text-neon-dim"
+              >
+                {c.checklistCta}
+                <ArrowIcon className="ml-2 h-4 w-4" />
+              </Link>
             </div>
 
             <div className="rounded-xl border border-white/8 bg-white/[0.02] p-6">
